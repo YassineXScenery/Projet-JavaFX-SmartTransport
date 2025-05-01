@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Interactive Map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        #map { height: 100vh; width: 100%; }
+        body { margin: 0; padding: 0; }
+    </style>
+</head>
+<body>
+<div id="map"></div>
+<script>
+    // Define variables and functions in the global scope
+    var map;
+    var markers = [];
+    var routeLine = null;
+    var isSelectingRoute = false;
+
+    function addMarker(lat, lng, name, type, id) {
+        var marker = L.marker([lat, lng]).addTo(map);
+        marker.bindPopup(`<b>${name}</b><br>Type: ${type}<br>ID: ${id}`);
+        markers.push(marker);
+        return marker;
+    }
+
+    function drawRoute(startLat, startLng, endLat, endLng, distance) {
+        if (routeLine) { map.removeLayer(routeLine); }
+        var routePoints = [[startLat, startLng], [endLat, endLng]];
+        routeLine = L.polyline(routePoints, { color: 'blue', weight: 3, opacity: 0.7 }).addTo(map);
+        var midPoint = L.latLng((startLat + endLat) / 2, (startLng + endLng) / 2);
+        L.popup().setLatLng(midPoint).setContent(`Distance: ${distance.toFixed(2)} km`).addTo(map);
+    }
+
+    function startRouteSelection() {
+        isSelectingRoute = true;
+        if (routeLine) { map.removeLayer(routeLine); routeLine = null; }
+        alert("Route selection started.");
+    }
+
+    // Initialize the map and set up click handler
+    document.addEventListener('DOMContentLoaded', function() {
+        map = L.map('map').setView([36.8065, 10.1815], 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        map.on('click', function(e) {
+            alert("Map clicked at: " + e.latlng.lat + ", " + e.latlng.lng);
+            if (typeof java !== 'undefined' && java.onMapClick) {
+                alert("Calling Java onMapClick...");
+                java.onMapClick(e.latlng.lat, e.latlng.lng);
+            } else {
+                alert("Java bridge not available");
+            }
+        });
+
+        // Signal readiness to Java
+        if (typeof window.setBridge === 'function') {
+            window.setBridge();
+        }
+        alert("Map script initialized and map set up.");
+    });
+
+    // Placeholder for Java to set the bridge
+    window.setBridge = function() {
+        alert("Bridge setup triggered from JavaScript.");
+    };
+</script>
+</body>
+</html>

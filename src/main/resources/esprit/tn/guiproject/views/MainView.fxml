@@ -8,6 +8,11 @@
     <center>
         <TabPane fx:id="tabPane">
             <tabs>
+                <Tab text="Map" closable="false">
+                    <content>
+                        <fx:include source="MapView.fxml"/>
+                    </content>
+                </Tab>
                 <Tab text="Points of Interest" closable="false">
                     <content>
                         <VBox spacing="10" alignment="TOP_CENTER">

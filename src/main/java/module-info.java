@@ -2,6 +2,8 @@ module esprit.tn.guiproject.esprit {
     requires javafx.controls;
     requires javafx.fxml;
     requires java.sql;
+    requires javafx.web;
+    requires jdk.jsobject;
 
     // Required for JavaFX reflection
     requires javafx.base;
