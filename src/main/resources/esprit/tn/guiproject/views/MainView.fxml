@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<BorderPane stylesheets="@MainView.css" fx:id="mainPane" prefHeight="600.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="esprit.tn.guiproject.controllers.MainController">
+    <center>
+        <TabPane fx:id="tabPane">
+            <tabs>
+                <Tab text="Points of Interest" closable="false">
+                    <content>
+                        <VBox spacing="10" alignment="TOP_CENTER">
+                            <padding>
+                                <Insets top="10" right="10" bottom="10" left="10"/>
+                            </padding>
+                            <GridPane hgap="10" vgap="10" alignment="CENTER">
+                                <Label text="Name:" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                                <TextField fx:id="poiNameField" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+                                <Label text="Latitude:" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                                <TextField fx:id="poiLatitudeField" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+                                <Label text="Longitude:" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+                                <TextField fx:id="poiLongitudeField" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+                                <Label text="Type:" GridPane.columnIndex="0" GridPane.rowIndex="3"/>
+                                <TextField fx:id="poiTypeField" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
+                                <HBox spacing="10" alignment="CENTER" GridPane.columnIndex="0" GridPane.rowIndex="4" GridPane.columnSpan="2">
+                                    <Button fx:id="addPoiButton" text="Add" onAction="#addPoi"/>
+                                    <Button fx:id="updatePoiButton" text="Update" onAction="#updatePoi"/>
+                                    <Button fx:id="clearPoiButton" text="Clear" onAction="#clearPoiFields"/>
+                                </HBox>
+                            </GridPane>
+                            <TableView fx:id="poiTable">
+                                <columns>
+                                    <TableColumn fx:id="poiIdColumn" text="ID" prefWidth="50"/>
+                                    <TableColumn fx:id="poiNameColumn" text="Name" prefWidth="150"/>
+                                    <TableColumn fx:id="poiLatitudeColumn" text="Latitude" prefWidth="100"/>
+                                    <TableColumn fx:id="poiLongitudeColumn" text="Longitude" prefWidth="100"/>
+                                    <TableColumn fx:id="poiTypeColumn" text="Type" prefWidth="100"/>
+                                </columns>
+                            </TableView>
+                            <Button fx:id="deletePoiButton" text="Delete Selected" onAction="#deletePoi"/>
+                        </VBox>
+                    </content>
+                </Tab>
+                <Tab text="Routes" closable="false">
+                    <content>
+                        <VBox spacing="10" alignment="TOP_CENTER">
+                            <padding>
+                                <Insets top="10" right="10" bottom="10" left="10"/>
+                            </padding>
+                            <GridPane hgap="10" vgap="10" alignment="CENTER">
+                                <Label text="Distance (km):" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                                <TextField fx:id="routeDistanceField" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+                                <Label text="Start Point ID:" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                                <TextField fx:id="routeStartPointField" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+                                <Label text="End Point ID:" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+                                <TextField fx:id="routeEndPointField" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+                                <Label text="Estimated Time (HH:mm:ss):" GridPane.columnIndex="0" GridPane.rowIndex="3"/>
+                                <TextField fx:id="routeTimeField" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
+                                <HBox spacing="10" alignment="CENTER" GridPane.columnIndex="0" GridPane.rowIndex="4" GridPane.columnSpan="2">
+                                    <Button fx:id="addRouteButton" text="Add" onAction="#addRoute"/>
+                                    <Button fx:id="updateRouteButton" text="Update" onAction="#updateRoute"/>
+                                    <Button fx:id="clearRouteButton" text="Clear" onAction="#clearRouteFields"/>
+                                </HBox>
+                            </GridPane>
+                            <TableView fx:id="routeTable">
+                                <columns>
+                                    <TableColumn fx:id="routeIdColumn" text="ID" prefWidth="50"/>
+                                    <TableColumn fx:id="routeDistanceColumn" text="Distance" prefWidth="100"/>
+                                    <TableColumn fx:id="routeStartPointColumn" text="Start Point" prefWidth="100"/>
+                                    <TableColumn fx:id="routeEndPointColumn" text="End Point" prefWidth="100"/>
+                                    <TableColumn fx:id="routeTimeColumn" text="Time" prefWidth="100"/>
+                                </columns>
+                            </TableView>
+                            <Button fx:id="deleteRouteButton" text="Delete Selected" onAction="#deleteRoute"/>
+                        </VBox>
+                    </content>
+                </Tab>
+            </tabs>
+        </TabPane>
+    </center>
+</BorderPane>
