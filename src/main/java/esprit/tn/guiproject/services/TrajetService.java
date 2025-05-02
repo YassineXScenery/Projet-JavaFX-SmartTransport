@@ -2,113 +2,126 @@ package esprit.tn.guiproject.services;
 
 import esprit.tn.guiproject.connection.DatabaseConnection;
 import esprit.tn.guiproject.models.Trajet;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
-import java.util.logging.Level;
 
 public class TrajetService {
+    private final Connection connection;
 
-    private static final Logger LOGGER = Logger.getLogger(TrajetService.class.getName());
-
-    // Create
-    public void ajouter(Trajet trajet) {
-        String sql = "INSERT INTO trajet (distance, point_depart, point_arrivee, temps_estime) VALUES (?, ?, ?, ?)";
-        try {
-            Connection conn = DatabaseConnection.getInstance().getConnection();
-            PreparedStatement ps = conn.prepareStatement(sql);
-            ps.setDouble(1, trajet.getDistance());
-            if (trajet.getPointDepart() != null) {
-                ps.setInt(2, trajet.getPointDepart());
-            } else {
-                ps.setNull(2, java.sql.Types.INTEGER);
-            }
-            if (trajet.getPointArrivee() != null) {
-                ps.setInt(3, trajet.getPointArrivee());
-            } else {
-                ps.setNull(3, java.sql.Types.INTEGER);
-            }
-            if (trajet.getTempsEstime() != null) {
-                ps.setTime(4, trajet.getTempsEstime());
-            } else {
-                ps.setNull(4, java.sql.Types.TIME);
-            }
-            ps.executeUpdate();
-            System.out.println("Trajet ajouté !");
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error adding Trajet", e);
+    public TrajetService() {
+        this.connection = DatabaseConnection.getInstance().getConnection();
+        if (connection == null) {
+            System.err.println("Erreur: Connexion à la base de données non établie.");
+        } else {
+            System.out.println("Connexion récupérée avec succès via DatabaseConnection.");
         }
     }
 
-    // Read
+    public int ajouter(Trajet trajet) {
+        String query = "INSERT INTO trajet (point_depart, point_arrivee, distance, temps_estime, start_latitude, start_longitude, start_nom, start_type, end_latitude, end_longitude, end_nom, end_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        try (PreparedStatement stmt = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
+            stmt.setObject(1, trajet.getPointDepart() != null ? trajet.getPointDepart() : null);
+            stmt.setObject(2, trajet.getPointArrivee() != null ? trajet.getPointArrivee() : null);
+            stmt.setDouble(3, trajet.getDistance());
+            stmt.setTime(4, trajet.getTempsEstime());
+            stmt.setObject(5, trajet.getStartLatitude());
+            stmt.setObject(6, trajet.getStartLongitude());
+            stmt.setObject(7, trajet.getStartNom());
+            stmt.setObject(8, trajet.getStartType());
+            stmt.setObject(9, trajet.getEndLatitude());
+            stmt.setObject(10, trajet.getEndLongitude());
+            stmt.setObject(11, trajet.getEndNom());
+            stmt.setObject(12, trajet.getEndType());
+            stmt.executeUpdate();
+            ResultSet rs = stmt.getGeneratedKeys();
+            if (rs.next()) {
+                int id = rs.getInt(1);
+                trajet.setId(id);
+                return id;
+            }
+        } catch (SQLException e) {
+            System.err.println("Erreur lors de l'ajout du trajet: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return -1;
+    }
+
     public List<Trajet> afficher() {
-        List<Trajet> list = new ArrayList<>();
-        String sql = "SELECT * FROM trajet";
-        try {
-            Connection conn = DatabaseConnection.getInstance().getConnection();
-            PreparedStatement ps = conn.prepareStatement(sql);
-            ResultSet rs = ps.executeQuery();
+        List<Trajet> trajets = new ArrayList<>();
+        String query = "SELECT * FROM trajet";
+        try (Statement stmt = connection.createStatement(); ResultSet rs = stmt.executeQuery(query)) {
             while (rs.next()) {
                 Trajet trajet = new Trajet();
                 trajet.setId(rs.getInt("id"));
+                trajet.setPointDepart(rs.getInt("point_depart"));
+                if (rs.wasNull()) trajet.setPointDepart(null);
+                trajet.setPointArrivee(rs.getInt("point_arrivee"));
+                if (rs.wasNull()) trajet.setPointArrivee(null);
                 trajet.setDistance(rs.getDouble("distance"));
-                trajet.setPointDepart(rs.getObject("point_depart", Integer.class));
-                trajet.setPointArrivee(rs.getObject("point_arrivee", Integer.class));
                 trajet.setTempsEstime(rs.getTime("temps_estime"));
-                list.add(trajet);
+                trajet.setStartLatitude(rs.getDouble("start_latitude"));
+                if (rs.wasNull()) trajet.setStartLatitude(null);
+                trajet.setStartLongitude(rs.getDouble("start_longitude"));
+                if (rs.wasNull()) trajet.setStartLongitude(null);
+                trajet.setStartNom(rs.getString("start_nom"));
+                trajet.setStartType(rs.getString("start_type"));
+                trajet.setEndLatitude(rs.getDouble("end_latitude"));
+                if (rs.wasNull()) trajet.setEndLatitude(null);
+                trajet.setEndLongitude(rs.getDouble("end_longitude"));
+                if (rs.wasNull()) trajet.setEndLongitude(null);
+                trajet.setEndNom(rs.getString("end_nom"));
+                trajet.setEndType(rs.getString("end_type"));
+                trajets.add(trajet);
             }
         } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error retrieving Trajet list", e);
+            System.err.println("Erreur lors de la récupération des trajets: " + e.getMessage());
+            e.printStackTrace();
         }
-        return list;
+        return trajets;
     }
 
-    // Update
     public void modifier(Trajet trajet) {
-        String sql = "UPDATE trajet SET distance = ?, point_depart = ?, point_arrivee = ?, temps_estime = ? WHERE id = ?";
-        try {
-            Connection conn = DatabaseConnection.getInstance().getConnection();
-            PreparedStatement ps = conn.prepareStatement(sql);
-            ps.setDouble(1, trajet.getDistance());
-            if (trajet.getPointDepart() != null) {
-                ps.setInt(2, trajet.getPointDepart());
-            } else {
-                ps.setNull(2, java.sql.Types.INTEGER);
-            }
-            if (trajet.getPointArrivee() != null) {
-                ps.setInt(3, trajet.getPointArrivee());
-            } else {
-                ps.setNull(3, java.sql.Types.INTEGER);
-            }
-            if (trajet.getTempsEstime() != null) {
-                ps.setTime(4, trajet.getTempsEstime());
-            } else {
-                ps.setNull(4, java.sql.Types.TIME);
-            }
-            ps.setInt(5, trajet.getId());
-            ps.executeUpdate();
-            System.out.println("Trajet modifié !");
+        String query = "UPDATE trajet SET point_depart = ?, point_arrivee = ?, distance = ?, temps_estime = ?, start_latitude = ?, start_longitude = ?, start_nom = ?, start_type = ?, end_latitude = ?, end_longitude = ?, end_nom = ?, end_type = ? WHERE id = ?";
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setObject(1, trajet.getPointDepart());
+            stmt.setObject(2, trajet.getPointArrivee());
+            stmt.setDouble(3, trajet.getDistance());
+            stmt.setTime(4, trajet.getTempsEstime());
+            stmt.setObject(5, trajet.getStartLatitude());
+            stmt.setObject(6, trajet.getStartLongitude());
+            stmt.setObject(7, trajet.getStartNom());
+            stmt.setObject(8, trajet.getStartType());
+            stmt.setObject(9, trajet.getEndLatitude());
+            stmt.setObject(10, trajet.getEndLongitude());
+            stmt.setObject(11, trajet.getEndNom());
+            stmt.setObject(12, trajet.getEndType());
+            stmt.setInt(13, trajet.getId());
+            stmt.executeUpdate();
         } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error updating Trajet", e);
+            System.err.println("Erreur lors de la modification du trajet: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
-    // Delete
     public void supprimer(int id) {
-        String sql = "DELETE FROM trajet WHERE id = ?";
-        try {
-            Connection conn = DatabaseConnection.getInstance().getConnection();
-            PreparedStatement ps = conn.prepareStatement(sql);
-            ps.setInt(1, id);
-            ps.executeUpdate();
-            System.out.println("Trajet supprimé !");
+        String query = "DELETE FROM trajet WHERE id = ?";
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setInt(1, id);
+            stmt.executeUpdate();
         } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error deleting Trajet", e);
+            System.err.println("Erreur lors de la suppression du trajet: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    public void removeAll() {
+        String query = "DELETE FROM trajet";
+        try (Statement stmt = connection.createStatement()) {
+            stmt.executeUpdate(query);
+        } catch (SQLException e) {
+            System.err.println("Erreur lors de la suppression de tous les trajets: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 }

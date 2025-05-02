@@ -18,6 +18,14 @@ public class PointInteret {
         this.type = type;
     }
 
+    // New constructor to match MapController usage
+    public PointInteret(double latitude, double longitude, String nom, String type) {
+        this.latitude = latitude;
+        this.longitude = longitude;
+        this.nom = nom;
+        this.type = type;
+    }
+
     // Getters and setters
     public int getId() {
         return id;

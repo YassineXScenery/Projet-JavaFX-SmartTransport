@@ -7,7 +7,8 @@ import javafx.fxml.FXML;
 import javafx.scene.web.WebView;
 import javafx.scene.web.WebEngine;
 import netscape.javascript.JSObject;
-import java.util.List;
+import java.sql.Time;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class MapController {
     @FXML
@@ -17,8 +18,10 @@ public class MapController {
     private boolean isSelectingRoute = false;
     private PointInteret startPoint = null;
     private PointInteret endPoint = null;
-    private MapBridge bridgeInstance; // Strong reference to MapBridge
-    private PoiController poiController; // Reference to PoiController
+    private MapBridge bridgeInstance;
+    private PoiController poiController;
+    private TrajetController trajetController;
+    private boolean routeInProgress = false;
 
     @FXML
     public void initialize() {
@@ -56,13 +59,18 @@ public class MapController {
 
     public void setPoiController(PoiController controller) {
         this.poiController = controller;
-        System.out.println("PoiController set in MapController.");
+        System.out.println("PoiController set in MapController to: " + (controller != null ? "not null" : "null"));
+    }
+
+    public void setTrajetController(TrajetController controller) {
+        this.trajetController = controller;
+        System.out.println("TrajetController set in MapController.");
     }
 
     private void setupMapAndBridge() {
         boolean isReady = false;
         int attempts = 0;
-        final int maxAttempts = 50; // Approx 5 seconds with 100ms delay
+        final int maxAttempts = 50;
         while (!isReady && attempts < maxAttempts) {
             try {
                 Object result = webEngine.executeScript("typeof addMarker !== 'undefined' && typeof map !== 'undefined' && typeof setBridge === 'function'");
@@ -73,7 +81,7 @@ public class MapController {
                     webEngine.executeScript("setBridge();");
                     try {
                         JSObject window = (JSObject) webEngine.executeScript("window");
-                        bridgeInstance = new MapBridge(); // Create and store instance
+                        bridgeInstance = new MapBridge();
                         window.setMember("java", bridgeInstance);
                         System.out.println("Java bridge registered with window object.");
                         webEngine.executeScript("if (typeof java !== 'undefined') { alert('Java bridge is accessible'); } else { alert('Java bridge not accessible'); }");
@@ -96,9 +104,9 @@ public class MapController {
     }
 
     private void loadExistingPOIs() {
-        List<PointInteret> pois = poiService.afficher();
+        var pois = poiService.afficher();
         System.out.println("Loading " + pois.size() + " existing POIs.");
-        for (PointInteret poi : pois) {
+        for (var poi : pois) {
             addMarkerToMap(poi);
         }
     }
@@ -120,32 +128,69 @@ public class MapController {
         }
     }
 
+    public void displayRoute(double lat1, double lng1, double lat2, double lng2, double distance) {
+        try {
+            clearMap();
+            String script = String.format(
+                    "drawRoute(%f, %f, %f, %f, %f);",
+                    lat1, lng1, lat2, lng2, distance
+            );
+            webEngine.executeScript(script);
+            System.out.println("Displayed route on map, distance: " + distance + " km");
+        } catch (Exception e) {
+            System.out.println("Error displaying route: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    public void clearMap() {
+        try {
+            webEngine.executeScript("clearMap();");
+            System.out.println("Map cleared of routes and markers.");
+            routeInProgress = false;
+        } catch (Exception e) {
+            System.out.println("Error clearing map: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    public double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
+        return bridgeInstance.calculateDistance(lat1, lon1, lat2, lon2);
+    }
+
     public void startRouteSelection() {
         isSelectingRoute = true;
         startPoint = null;
         endPoint = null;
+        clearMap();
         webEngine.executeScript("startRouteSelection();");
         System.out.println("Started route selection.");
     }
 
     public class MapBridge {
         private final MapController controller;
+        private final AtomicInteger tempIdCounter = new AtomicInteger(-1);
 
         public MapBridge() {
             this.controller = MapController.this;
         }
 
-        public void onMapClick(double lat, double lng) {
-            System.out.println("onMapClick called in MapBridge: Latitude = " + lat + ", Longitude = " + lng);
+        public void onMapClick(double lat, double lng, Integer id, String pointType) {
+            System.out.println("onMapClick triggered: Latitude = " + lat + ", Longitude = " + lng + ", ID = " + id + ", Type = " + pointType + ", isSelectingRoute = " + isSelectingRoute + ", poiController = " + (controller.poiController != null));
             try {
                 if (isSelectingRoute) {
                     System.out.println("Handling route point selection...");
-                    handleRoutePointSelection(lat, lng);
+                    handleRoutePointSelection(lat, lng, id, pointType);
                 } else if (controller.poiController != null) {
-                    System.out.println("Updating POI fields with coordinates...");
+                    System.out.println("Attempting to update POI fields with coordinates: " + lat + ", " + lng);
                     Platform.runLater(() -> {
-                        System.out.println("Inside Platform.runLater: Attempting to update coordinates...");
-                        controller.poiController.updateCoordinates(lat, lng);
+                        System.out.println("Running update on JavaFX thread: poiController = " + (controller.poiController != null));
+                        if (controller.poiController != null) {
+                            controller.poiController.updateCoordinates(lat, lng);
+                            System.out.println("POI fields updated successfully.");
+                        } else {
+                            System.out.println("poiController is null during update attempt.");
+                        }
                     });
                 } else {
                     System.out.println("PoiController is not set, proceeding with default POI creation...");
@@ -157,30 +202,25 @@ public class MapController {
             }
         }
 
-        private void handleRoutePointSelection(double lat, double lng) {
+        private void handleRoutePointSelection(double lat, double lng, Integer id, String pointType) {
             try {
-                if (startPoint == null) {
-                    startPoint = new PointInteret();
-                    startPoint.setLatitude(lat);
-                    startPoint.setLongitude(lng);
-                    startPoint.setNom("Start Point");
-                    startPoint.setType("Route");
-                    int id = poiService.ajouter(startPoint);
-                    startPoint.setId(id);
+                PointInteret point = id != null ? poiService.getById(id) : null;
+                if (pointType.equals("start") && startPoint == null) {
+                    startPoint = point != null ? point : new PointInteret(lat, lng, "Start Point", "Route");
+                    if (point == null) {
+                        startPoint.setId(tempIdCounter.decrementAndGet());
+                    }
                     controller.addMarkerToMap(startPoint);
-                    System.out.println("Set start point: " + lat + ", " + lng);
-                } else if (endPoint == null) {
-                    endPoint = new PointInteret();
-                    endPoint.setLatitude(lat);
-                    endPoint.setLongitude(lng);
-                    endPoint.setNom("End Point");
-                    endPoint.setType("Route");
-                    int id = poiService.ajouter(endPoint);
-                    endPoint.setId(id);
+                    System.out.println("Set start point: " + lat + ", " + lng + ", ID: " + startPoint.getId());
+                } else if (pointType.equals("end") && endPoint == null && startPoint != null) {
+                    endPoint = point != null ? point : new PointInteret(lat, lng, "End Point", "Route");
+                    if (point == null) {
+                        endPoint.setId(tempIdCounter.decrementAndGet());
+                    }
                     controller.addMarkerToMap(endPoint);
                     calculateRoute();
                     isSelectingRoute = false;
-                    System.out.println("Set end point: " + lat + ", " + lng);
+                    System.out.println("Set end point: " + lat + ", " + lng + ", ID: " + endPoint.getId());
                 }
             } catch (Exception e) {
                 System.out.println("Error in handleRoutePointSelection: " + e.getMessage());
@@ -206,20 +246,21 @@ public class MapController {
         }
 
         private void calculateRoute() {
+            if (routeInProgress) {
+                System.out.println("Route calculation already in progress, skipping...");
+                return;
+            }
+
             try {
+                routeInProgress = true;
                 if (startPoint != null && endPoint != null) {
-                    double distance = calculateDistance(
+                    String script = String.format(
+                            "drawRoute(%f, %f, %f, %f, 0);",
                             startPoint.getLatitude(), startPoint.getLongitude(),
                             endPoint.getLatitude(), endPoint.getLongitude()
                     );
-                    String script = String.format(
-                            "drawRoute(%f, %f, %f, %f, %f);",
-                            startPoint.getLatitude(), startPoint.getLongitude(),
-                            endPoint.getLatitude(), endPoint.getLongitude(),
-                            distance
-                    );
                     webEngine.executeScript(script);
-                    System.out.println("Route calculated, distance: " + distance + " km");
+                    System.out.println("Route calculation triggered via JavaScript.");
                 }
             } catch (Exception e) {
                 System.out.println("Error in calculateRoute: " + e.getMessage());
@@ -227,7 +268,7 @@ public class MapController {
             }
         }
 
-        private double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
+        public double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
             final int R = 6371;
             double latDistance = Math.toRadians(lat2 - lat1);
             double lonDistance = Math.toRadians(lon2 - lon1);
@@ -236,6 +277,38 @@ public class MapController {
                     * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
             double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
             return R * c;
+        }
+
+        @SuppressWarnings("unused")
+        public void createTrajetFromRoute(double lat1, double lng1, double lat2, double lng2, double distance, double timeInMinutes, Integer startId, Integer endId) {
+            System.out.println("createTrajetFromRoute called with lat1: " + lat1 + ", lng1: " + lng1 + ", lat2: " + lat2 + ", lng2: " + lng2 + ", distance: " + distance + ", timeInMinutes: " + timeInMinutes + ", startId: " + startId + ", endId: " + endId);
+            if (trajetController != null) {
+                startPoint = startId != null ? poiService.getById(startId) : startPoint;
+                endPoint = endId != null ? poiService.getById(endId) : endPoint;
+
+                if (startPoint == null) {
+                    startPoint = new PointInteret(lat1, lng1, "Start Point", "Route");
+                    startPoint.setId(tempIdCounter.decrementAndGet());
+                }
+                if (endPoint == null) {
+                    endPoint = new PointInteret(lat2, lng2, "End Point", "Route");
+                    endPoint.setId(tempIdCounter.decrementAndGet());
+                }
+
+                long seconds = (long) (timeInMinutes * 60);
+                Time estimatedTime = new Time(seconds * 1000);
+
+                controller.addMarkerToMap(startPoint);
+                controller.addMarkerToMap(endPoint);
+
+                Platform.runLater(() -> {
+                    trajetController.createTrajetFromRoute(startPoint, endPoint, distance, estimatedTime);
+                    routeInProgress = false;
+                });
+            } else {
+                System.out.println("TrajetController is null, cannot create Trajet.");
+                routeInProgress = false;
+            }
         }
     }
 }

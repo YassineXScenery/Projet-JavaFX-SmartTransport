@@ -79,6 +79,29 @@ public class PointInteretService {
         return list;
     }
 
+    // Read by ID
+    public PointInteret getById(int id) {
+        String sql = "SELECT * FROM pointinteret WHERE id = ?";
+        try {
+            Connection conn = DatabaseConnection.getInstance().getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setInt(1, id);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                PointInteret pi = new PointInteret();
+                pi.setId(rs.getInt("id"));
+                pi.setLatitude(rs.getDouble("latitude"));
+                pi.setLongitude(rs.getDouble("longitude"));
+                pi.setNom(rs.getString("nom"));
+                pi.setType(rs.getString("type"));
+                return pi;
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error retrieving PointInteret by ID: " + id, e);
+        }
+        return null;
+    }
+
     // Update
     public void modifier(PointInteret pi) {
         String sql = "UPDATE pointinteret SET latitude = ?, longitude = ?, nom = ?, type = ? WHERE id = ?";

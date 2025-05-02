@@ -10,18 +10,15 @@
     </padding>
     <Label text="Trajet Management" style="-fx-font-size: 16; -fx-font-weight: bold;"/>
     <GridPane hgap="10" vgap="10" alignment="CENTER">
-        <Label text="Distance (km):" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
-        <TextField fx:id="routeDistanceField" GridPane.columnIndex="1" GridPane.rowIndex="0" prefWidth="250"/>
-        <Label text="Start Point ID:" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
-        <TextField fx:id="routeStartPointField" GridPane.columnIndex="1" GridPane.rowIndex="1" prefWidth="250"/>
-        <Label text="End Point ID:" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
-        <TextField fx:id="routeEndPointField" GridPane.columnIndex="1" GridPane.rowIndex="2" prefWidth="250"/>
-        <Label text="Estimated Time (HH:mm:ss):" GridPane.columnIndex="0" GridPane.rowIndex="3"/>
-        <TextField fx:id="routeTimeField" GridPane.columnIndex="1" GridPane.rowIndex="3" prefWidth="250"/>
-        <HBox spacing="10" alignment="CENTER" GridPane.columnIndex="0" GridPane.rowIndex="4" GridPane.columnSpan="2">
+        <Label text="Start Point ID:" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+        <TextField fx:id="routeStartPointField" GridPane.columnIndex="1" GridPane.rowIndex="0" prefWidth="250"/>
+        <Label text="End Point ID:" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+        <TextField fx:id="routeEndPointField" GridPane.columnIndex="1" GridPane.rowIndex="1" prefWidth="250"/>
+        <HBox spacing="10" alignment="CENTER" GridPane.columnIndex="0" GridPane.rowIndex="2" GridPane.columnSpan="2">
             <Button fx:id="addRouteButton" text="Add" prefWidth="90"/>
             <Button fx:id="updateRouteButton" text="Update" prefWidth="90"/>
             <Button fx:id="clearRouteButton" text="Clear" prefWidth="90"/>
+            <Button fx:id="selectRouteButton" text="Select on Map" prefWidth="120"/>
         </HBox>
     </GridPane>
     <TableView fx:id="routeTable" prefHeight="350" prefWidth="600">
@@ -30,8 +27,11 @@
             <TableColumn fx:id="routeDistanceColumn" text="Distance" prefWidth="120"/>
             <TableColumn fx:id="routeStartPointColumn" text="Start Point" prefWidth="130"/>
             <TableColumn fx:id="routeEndPointColumn" text="End Point" prefWidth="130"/>
-            <TableColumn fx:id="routeTimeColumn" text="Time" prefWidth="150"/>
+            <TableColumn fx:id="routeTimeColumn" text="Estimated Time" prefWidth="150"/>
         </columns>
     </TableView>
-    <Button fx:id="deleteRouteButton" text="Delete Selected" prefWidth="180"/>
+    <HBox spacing="10" alignment="CENTER">
+        <Button fx:id="deleteRouteButton" text="Delete Selected" prefWidth="180"/>
+        <Button fx:id="removeAllButton" text="Remove All" prefWidth="180" onAction="#removeAll"/>
+    </HBox>
 </VBox>

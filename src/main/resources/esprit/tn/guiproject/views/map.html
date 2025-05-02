@@ -1,72 +1,186 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Map</title>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Map View</title>
+    <meta charset="utf-8" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
     <style>
-        #map { height: 400px; width: 100%; }
+        #map { height: 100vh; width: 100%; }
+        body { margin: 0; padding: 0; }
     </style>
 </head>
 <body>
 <div id="map"></div>
 <script>
-    var map = L.map('map').setView([36.8065, 10.1815], 13); // Default to Tunis
+    var map = L.map('map').setView([36.8065, 10.1815], 13);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(map);
 
-    var markers = [];
-    var routeSelectionMode = false;
-    var routePoints = [];
+    var routeControl = null;
+    var startMarker = null;
+    var endMarker = null;
+    var routeCalculated = false;
+    var isSelectingRoute = false;
 
-    function setBridge() {
-        alert("Bridge setup triggered from JavaScript.");
-    }
-
-    function addMarker(lat, lng, name, type, id) {
-        var marker = L.marker([lat, lng]).addTo(map);
-        marker.bindPopup("<b>" + name + "</b><br>Type: " + type + "<br>ID: " + id).openPopup();
-        markers.push(marker);
-    }
-
-    function startRouteSelection() {
-        routeSelectionMode = true;
-        routePoints = [];
-        alert("Route selection mode activated. Click two points on the map.");
-    }
-
-    function drawRoute(startLat, startLng, endLat, endLng, distance) {
-        var route = L.polyline([
-            [startLat, startLng],
-            [endLat, endLng]
-        ], {color: 'blue'}).addTo(map);
-        map.fitBounds(route.getBounds());
-        alert("Route drawn. Distance: " + distance.toFixed(2) + " km");
-    }
-
-    // Ensure window.java persists across events
-    window.java = null; // Will be set by Java
-
+    // Add general map click listener
     map.on('click', function(e) {
         var lat = e.latlng.lat;
         var lng = e.latlng.lng;
-        alert("Map clicked at: " + lat + ", " + lng);
-        if (typeof window.java !== 'undefined' && window.java != null) {
-            try {
-                alert("Calling Java onMapClick...");
-                window.java.onMapClick(lat, lng);
-            } catch (err) {
-                alert("Error calling Java onMapClick: " + err);
+        if (typeof java !== 'undefined') {
+            if (isSelectingRoute) {
+                handleRouteClick(lat, lng);
+            } else {
+                java.onMapClick(lat, lng, null, null); // Trigger POI update
+                console.log("Map clicked for POI update: lat = " + lat + ", lng = " + lng);
             }
-        } else {
-            alert("Java bridge not accessible from click handler");
         }
     });
 
-    alert("Map script initialized and map set up.");
+    function addMarker(lat, lng, name, type, id) {
+        var marker = L.marker([lat, lng], { title: name + " (ID: " + id + ")" })
+            .addTo(map)
+            .bindPopup("<b>" + name + "</b><br>Type: " + type + "<br>ID: " + id)
+            .on('click', function(e) {
+                if (isSelectingRoute && !startMarker) {
+                    startMarker = marker;
+                    if (typeof java !== 'undefined') {
+                        java.onMapClick(lat, lng, id, "start");
+                    }
+                } else if (isSelectingRoute && !endMarker && startMarker !== marker) {
+                    endMarker = marker;
+                    if (typeof java !== 'undefined') {
+                        java.onMapClick(lat, lng, id, "end");
+                    }
+                    calculateRoute();
+                }
+            });
+    }
+
+    function startRouteSelection() {
+        isSelectingRoute = true;
+        map.on('click', onMapClick); // Keep this for route-specific handling if needed
+        if (routeControl) {
+            map.removeControl(routeControl);
+            routeControl = null;
+        }
+        startMarker = null;
+        endMarker = null;
+        routeCalculated = false;
+    }
+
+    function handleRouteClick(lat, lng) {
+        if (!startMarker) {
+            startMarker = L.marker([lat, lng]).addTo(map).bindPopup("Start Point (New)").openPopup();
+            if (typeof java !== 'undefined') {
+                java.onMapClick(lat, lng, null, "start");
+            }
+        } else if (!endMarker) {
+            endMarker = L.marker([lat, lng]).addTo(map).bindPopup("End Point (New)").openPopup();
+            if (typeof java !== 'undefined') {
+                java.onMapClick(lat, lng, null, "end");
+            }
+            calculateRoute();
+            map.off('click', handleRouteClick); // Remove general click handler after route completion
+        }
+    }
+
+    function calculateRoute() {
+        if (routeCalculated) {
+            console.log("Route already calculated, skipping...");
+            return;
+        }
+
+        if (routeControl) {
+            routeControl.removeEventListener('routesfound');
+            map.removeControl(routeControl);
+            routeControl = null;
+        }
+
+        if (startMarker && endMarker) {
+            routeControl = L.Routing.control({
+                waypoints: [
+                    L.latLng(startMarker.getLatLng()),
+                    L.latLng(endMarker.getLatLng())
+                ],
+                routeWhileDragging: false,
+                geodesic: false,
+                lineOptions: {
+                    styles: [{ color: 'blue', weight: 4 }]
+                },
+                createMarker: function() { return null; }
+            }).addTo(map);
+
+            routeControl.on('routesfound', function(e) {
+                var routes = e.routes;
+                var distance = routes[0].summary.totalDistance / 1000;
+                var timeInSeconds = routes[0].summary.totalTime;
+                var timeInMinutes = timeInSeconds / 60;
+                if (typeof java !== 'undefined' && java.createTrajetFromRoute && !routeCalculated) {
+                    console.log("Calling createTrajetFromRoute with distance: " + distance + " km, time: " + timeInMinutes + " minutes");
+                    java.createTrajetFromRoute(
+                        startMarker.getLatLng().lat, startMarker.getLatLng().lng,
+                        endMarker.getLatLng().lat, endMarker.getLatLng().lng,
+                        distance,
+                        timeInMinutes,
+                        startMarker.options.title ? parseInt(startMarker.options.title.match(/ID: (\d+)/)[1]) : null,
+                        endMarker.options.title ? parseInt(endMarker.options.title.match(/ID: (\d+)/)[1]) : null
+                    );
+                    routeCalculated = true;
+                }
+            });
+        }
+    }
+
+    function drawRoute(lat1, lng1, lat2, lng2, distance) {
+        if (routeControl) {
+            routeControl.removeEventListener('routesfound');
+            map.removeControl(routeControl);
+            routeControl = null;
+        }
+        startMarker = L.marker([lat1, lng1]).addTo(map).bindPopup("Start Point").openPopup();
+        endMarker = L.marker([lat2, lng2]).addTo(map).bindPopup("End Point").openPopup();
+        routeControl = L.Routing.control({
+            waypoints: [
+                L.latLng(lat1, lng1),
+                L.latLng(lat2, lng2)
+            ],
+            routeWhileDragging: false,
+            geodesic: false,
+            lineOptions: {
+                styles: [{ color: 'blue', weight: 4 }]
+            },
+            createMarker: function() { return null; }
+        }).addTo(map);
+        routeCalculated = false;
+        isSelectingRoute = false;
+    }
+
+    function clearMap() {
+        if (routeControl) {
+            routeControl.removeEventListener('routesfound');
+            map.removeControl(routeControl);
+            routeControl = null;
+        }
+        if (startMarker) map.removeLayer(startMarker);
+        if (endMarker) map.removeLayer(endMarker);
+        startMarker = null;
+        endMarker = null;
+        routeCalculated = false;
+        isSelectingRoute = false;
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+    }
+
+    function setBridge() {
+        // Bridge is set via Java
+    }
 </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9398aa434ac3b07d',t:'MTc0NjIwMDkyOS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'939ac3dc39506760',t:'MTc0NjIyMjk0OS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
 </body>
 </html>
