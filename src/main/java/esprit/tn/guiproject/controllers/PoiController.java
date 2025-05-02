@@ -28,10 +28,6 @@ public class PoiController {
     @FXML private TextField poiLatitudeField;
     @FXML private TextField poiLongitudeField;
     @FXML private TextField poiTypeField;
-    @FXML private Button addPoiButton;
-    @FXML private Button updatePoiButton;
-    @FXML private Button deletePoiButton;
-    @FXML private Button clearPoiButton;
 
     private PointInteretService poiService = new PointInteretService();
     private ObservableList<PointInteret> poiList = FXCollections.observableArrayList();
@@ -53,6 +49,20 @@ public class PoiController {
                 populatePoiFields(newSelection);
             }
         });
+
+        // Log to confirm fields are initialized
+        System.out.println("PoiController initialized. poiLatitudeField = " + (poiLatitudeField != null ? "not null" : "null") + ", poiLongitudeField = " + (poiLongitudeField != null ? "not null" : "null"));
+    }
+
+    public void updateCoordinates(double latitude, double longitude) {
+        System.out.println("updateCoordinates called with: Latitude = " + latitude + ", Longitude = " + longitude);
+        if (poiLatitudeField != null && poiLongitudeField != null) {
+            poiLatitudeField.setText(String.valueOf(latitude));
+            poiLongitudeField.setText(String.valueOf(longitude));
+            System.out.println("Updated POI fields: Latitude = " + poiLatitudeField.getText() + ", Longitude = " + poiLongitudeField.getText());
+        } else {
+            System.out.println("Error: Latitude or Longitude fields are null. poiLatitudeField = " + (poiLatitudeField != null ? "not null" : "null") + ", poiLongitudeField = " + (poiLongitudeField != null ? "not null" : "null"));
+        }
     }
 
     private void loadPoiData() {

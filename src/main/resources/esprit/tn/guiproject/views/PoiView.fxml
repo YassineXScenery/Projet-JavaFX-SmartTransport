@@ -19,9 +19,9 @@
         <Label text="Type:" GridPane.columnIndex="0" GridPane.rowIndex="3"/>
         <TextField fx:id="poiTypeField" GridPane.columnIndex="1" GridPane.rowIndex="3" prefWidth="250"/>
         <HBox spacing="10" alignment="CENTER" GridPane.columnIndex="0" GridPane.rowIndex="4" GridPane.columnSpan="2">
-            <Button fx:id="addPoiButton" text="Add" prefWidth="90"/>
-            <Button fx:id="updatePoiButton" text="Update" prefWidth="90"/>
-            <Button fx:id="clearPoiButton" text="Clear" prefWidth="90"/>
+            <Button text="Add" prefWidth="90" onAction="#addPoi"/>
+            <Button text="Update" prefWidth="90" onAction="#updatePoi"/>
+            <Button text="Clear" prefWidth="90" onAction="#clearPoiFields"/>
         </HBox>
     </GridPane>
     <TableView fx:id="poiTable" prefHeight="350" prefWidth="600">
@@ -33,5 +33,5 @@
             <TableColumn fx:id="poiTypeColumn" text="Type" prefWidth="110"/>
         </columns>
     </TableView>
-    <Button fx:id="deletePoiButton" text="Delete Selected" prefWidth="180"/>
+    <Button text="Delete Selected" prefWidth="180" onAction="#deletePoi"/>
 </VBox>

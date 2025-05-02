@@ -1,78 +1,72 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Interactive Map</title>
+    <title>Map</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
-        #map { height: 100%; width: 100%; }
-        body, html { height: 100%; width: 100%; margin: 0; padding: 0; }
+        #map { height: 400px; width: 100%; }
     </style>
 </head>
 <body>
 <div id="map"></div>
 <script>
-    var map;
+    var map = L.map('map').setView([36.8065, 10.1815], 13); // Default to Tunis
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
     var markers = [];
-    var routeLine = null;
-    var isSelectingRoute = false;
+    var routeSelectionMode = false;
+    var routePoints = [];
+
+    function setBridge() {
+        alert("Bridge setup triggered from JavaScript.");
+    }
 
     function addMarker(lat, lng, name, type, id) {
         var marker = L.marker([lat, lng]).addTo(map);
-        marker.bindPopup(`<b>${name}</b><br>Type: ${type}<br>ID: ${id}`);
+        marker.bindPopup("<b>" + name + "</b><br>Type: " + type + "<br>ID: " + id).openPopup();
         markers.push(marker);
-        return marker;
-    }
-
-    function drawRoute(startLat, startLng, endLat, endLng, distance) {
-        if (routeLine) { map.removeLayer(routeLine); }
-        var routePoints = [[startLat, startLng], [endLat, endLng]];
-        routeLine = L.polyline(routePoints, { color: 'blue', weight: 3, opacity: 0.7 }).addTo(map);
-        var midPoint = L.latLng((startLat + endLat) / 2, (startLng + endLng) / 2);
-        L.popup().setLatLng(midPoint).setContent(`Distance: ${distance.toFixed(2)} km`).openOn(map);
     }
 
     function startRouteSelection() {
-        isSelectingRoute = true;
-        if (routeLine) { map.removeLayer(routeLine); routeLine = null; }
-        alert("Route selection started.");
+        routeSelectionMode = true;
+        routePoints = [];
+        alert("Route selection mode activated. Click two points on the map.");
     }
 
-    document.addEventListener('DOMContentLoaded', function() {
-        map = L.map('map').setView([36.8065, 10.1815], 13);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '© OpenStreetMap contributors'
-        }).addTo(map);
+    function drawRoute(startLat, startLng, endLat, endLng, distance) {
+        var route = L.polyline([
+            [startLat, startLng],
+            [endLat, endLng]
+        ], {color: 'blue'}).addTo(map);
+        map.fitBounds(route.getBounds());
+        alert("Route drawn. Distance: " + distance.toFixed(2) + " km");
+    }
 
-        map.on('click', function(e) {
-            alert("Map clicked at: " + e.latlng.lat + ", " + e.latlng.lng);
-            if (typeof java !== 'undefined' && java.onMapClick) {
+    // Ensure window.java persists across events
+    window.java = null; // Will be set by Java
+
+    map.on('click', function(e) {
+        var lat = e.latlng.lat;
+        var lng = e.latlng.lng;
+        alert("Map clicked at: " + lat + ", " + lng);
+        if (typeof window.java !== 'undefined' && window.java != null) {
+            try {
                 alert("Calling Java onMapClick...");
-                java.onMapClick(e.latlng.lat, e.latlng.lng);
-            } else {
-                alert("Java bridge not available");
+                window.java.onMapClick(lat, lng);
+            } catch (err) {
+                alert("Error calling Java onMapClick: " + err);
             }
-        });
-
-        if (typeof window.setBridge === 'function') {
-            window.setBridge();
+        } else {
+            alert("Java bridge not accessible from click handler");
         }
-        alert("Map script initialized and map set up.");
-
-        // Periodically check bridge availability
-        setInterval(function() {
-            if (typeof java === 'undefined' && typeof window.setBridge === 'function') {
-                window.setBridge();
-                alert("Reinitializing Java bridge...");
-            }
-        }, 1000); // Check every second
     });
 
-    window.setBridge = function() {
-        alert("Bridge setup triggered from JavaScript.");
-    };
+    alert("Map script initialized and map set up.");
 </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9392d8edcdb1b087',t:'MTc0NjEzOTkyNi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
 </body>
 </html>

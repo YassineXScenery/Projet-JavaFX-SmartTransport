@@ -10,7 +10,7 @@ module esprit.tn.guiproject.esprit {
 
     // Export and open packages for FXML and controllers
     exports esprit.tn.guiproject.controllers to javafx.fxml;
-    opens esprit.tn.guiproject.controllers to javafx.fxml;
+    opens esprit.tn.guiproject.controllers to javafx.fxml, javafx.web; // Added javafx.web
     opens esprit.tn.guiproject.views to javafx.fxml;
     opens esprit.tn.guiproject to javafx.fxml;
 

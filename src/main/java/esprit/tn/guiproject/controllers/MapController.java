@@ -18,6 +18,7 @@ public class MapController {
     private PointInteret startPoint = null;
     private PointInteret endPoint = null;
     private MapBridge bridgeInstance; // Strong reference to MapBridge
+    private PoiController poiController; // Reference to PoiController
 
     @FXML
     public void initialize() {
@@ -51,6 +52,11 @@ public class MapController {
         });
 
         webEngine.setOnError(event -> System.out.println("WebView Error: " + event.getMessage()));
+    }
+
+    public void setPoiController(PoiController controller) {
+        this.poiController = controller;
+        System.out.println("PoiController set in MapController.");
     }
 
     private void setupMapAndBridge() {
@@ -130,13 +136,19 @@ public class MapController {
         }
 
         public void onMapClick(double lat, double lng) {
+            System.out.println("onMapClick called in MapBridge: Latitude = " + lat + ", Longitude = " + lng);
             try {
-                System.out.println("Map clicked at: Latitude = " + lat + ", Longitude = " + lng);
                 if (isSelectingRoute) {
                     System.out.println("Handling route point selection...");
                     handleRoutePointSelection(lat, lng);
+                } else if (controller.poiController != null) {
+                    System.out.println("Updating POI fields with coordinates...");
+                    Platform.runLater(() -> {
+                        System.out.println("Inside Platform.runLater: Attempting to update coordinates...");
+                        controller.poiController.updateCoordinates(lat, lng);
+                    });
                 } else {
-                    System.out.println("Handling POI creation...");
+                    System.out.println("PoiController is not set, proceeding with default POI creation...");
                     handlePOICreation(lat, lng);
                 }
             } catch (Exception e) {

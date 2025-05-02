@@ -6,29 +6,18 @@
 
 <ScrollPane fitToWidth="true" prefHeight="700.0" prefWidth="1000.0" style="-fx-background-color: #f4f4f4;" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
     <content>
-        <VBox spacing="20" alignment="TOP_CENTER" style="-fx-background-color: #f4f4f4;">
+        <VBox fx:id="mainVBox" spacing="20" alignment="TOP_CENTER" style="-fx-background-color: #f4f4f4;">
             <padding>
                 <Insets top="20" right="20" bottom="20" left="20"/>
             </padding>
             <!-- Map Section -->
-            <BorderPane prefHeight="400" minHeight="400" maxHeight="400" style="-fx-background-color: #ffffff;">
-                <center>
-                    <fx:include source="MapView.fxml"/>
-                </center>
-            </BorderPane>
+            <BorderPane fx:id="mapPane" prefHeight="400" minHeight="400" maxHeight="400" style="-fx-background-color: #ffffff;"/>
 
             <!-- CRUD Section for Trajet and POI -->
-            <HBox spacing="30" alignment="CENTER" style="-fx-padding: 20;">
-                <!-- POI CRUD -->
-                <fx:include source="PoiView.fxml"/>
-                <!-- Trajet CRUD -->
-                <fx:include source="TrajetView.fxml"/>
-            </HBox>
+            <HBox fx:id="crudHBox" spacing="30" alignment="CENTER" style="-fx-padding: 20;"/>
 
             <!-- Tables Section for Trajet and POI -->
-            <HBox spacing="30" alignment="CENTER" style="-fx-padding: 20;">
-                <!-- Tables are already included in PoiView.fxml and TrajetView.fxml -->
-            </HBox>
+            <HBox fx:id="tablesHBox" spacing="30" alignment="CENTER" style="-fx-padding: 20;"/>
         </VBox>
     </content>
 </ScrollPane>
