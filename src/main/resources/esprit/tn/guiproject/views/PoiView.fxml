@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox fx:controller="esprit.tn.guiproject.controllers.PoiController" spacing="15" alignment="TOP_CENTER" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
+    <padding>
+        <Insets top="20" right="15" bottom="20" left="15"/>
+    </padding>
+    <Label text="Point of Interest Management" style="-fx-font-size: 16; -fx-font-weight: bold;"/>
+    <GridPane hgap="10" vgap="10" alignment="CENTER">
+        <Label text="Name:" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+        <TextField fx:id="poiNameField" GridPane.columnIndex="1" GridPane.rowIndex="0" prefWidth="250"/>
+        <Label text="Latitude:" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+        <TextField fx:id="poiLatitudeField" GridPane.columnIndex="1" GridPane.rowIndex="1" prefWidth="250"/>
+        <Label text="Longitude:" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+        <TextField fx:id="poiLongitudeField" GridPane.columnIndex="1" GridPane.rowIndex="2" prefWidth="250"/>
+        <Label text="Type:" GridPane.columnIndex="0" GridPane.rowIndex="3"/>
+        <TextField fx:id="poiTypeField" GridPane.columnIndex="1" GridPane.rowIndex="3" prefWidth="250"/>
+        <HBox spacing="10" alignment="CENTER" GridPane.columnIndex="0" GridPane.rowIndex="4" GridPane.columnSpan="2">
+            <Button fx:id="addPoiButton" text="Add" prefWidth="90"/>
+            <Button fx:id="updatePoiButton" text="Update" prefWidth="90"/>
+            <Button fx:id="clearPoiButton" text="Clear" prefWidth="90"/>
+        </HBox>
+    </GridPane>
+    <TableView fx:id="poiTable" prefHeight="350" prefWidth="600">
+        <columns>
+            <TableColumn fx:id="poiIdColumn" text="ID" prefWidth="70"/>
+            <TableColumn fx:id="poiNameColumn" text="Name" prefWidth="160"/>
+            <TableColumn fx:id="poiLatitudeColumn" text="Latitude" prefWidth="130"/>
+            <TableColumn fx:id="poiLongitudeColumn" text="Number" prefWidth="130"/>
+            <TableColumn fx:id="poiTypeColumn" text="Type" prefWidth="110"/>
+        </columns>
+    </TableView>
+    <Button fx:id="deletePoiButton" text="Delete Selected" prefWidth="180"/>
+</VBox>

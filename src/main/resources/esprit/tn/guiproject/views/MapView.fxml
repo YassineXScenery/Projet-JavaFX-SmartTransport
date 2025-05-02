@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.layout.*?>
 <?import javafx.scene.web.WebView?>
-<?import javafx.geometry.Insets?>
+<?import javafx.scene.layout.BorderPane?>
 
-<BorderPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="esprit.tn.guiproject.controllers.MapController">
+<BorderPane fx:controller="esprit.tn.guiproject.controllers.MapController" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
     <center>
-        <WebView fx:id="mapWebView" prefWidth="800" prefHeight="600"/>
+        <WebView fx:id="mapWebView" prefHeight="400" prefWidth="800" minHeight="400" minWidth="800" />
     </center>
-</BorderPane> 
+</BorderPane>

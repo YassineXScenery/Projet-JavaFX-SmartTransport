@@ -5,14 +5,13 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
-        #map { height: 100vh; width: 100%; }
-        body { margin: 0; padding: 0; }
+        #map { height: 100%; width: 100%; }
+        body, html { height: 100%; width: 100%; margin: 0; padding: 0; }
     </style>
 </head>
 <body>
 <div id="map"></div>
 <script>
-    // Define variables and functions in the global scope
     var map;
     var markers = [];
     var routeLine = null;
@@ -30,7 +29,7 @@
         var routePoints = [[startLat, startLng], [endLat, endLng]];
         routeLine = L.polyline(routePoints, { color: 'blue', weight: 3, opacity: 0.7 }).addTo(map);
         var midPoint = L.latLng((startLat + endLat) / 2, (startLng + endLng) / 2);
-        L.popup().setLatLng(midPoint).setContent(`Distance: ${distance.toFixed(2)} km`).addTo(map);
+        L.popup().setLatLng(midPoint).setContent(`Distance: ${distance.toFixed(2)} km`).openOn(map);
     }
 
     function startRouteSelection() {
@@ -39,7 +38,6 @@
         alert("Route selection started.");
     }
 
-    // Initialize the map and set up click handler
     document.addEventListener('DOMContentLoaded', function() {
         map = L.map('map').setView([36.8065, 10.1815], 13);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -57,17 +55,24 @@
             }
         });
 
-        // Signal readiness to Java
         if (typeof window.setBridge === 'function') {
             window.setBridge();
         }
         alert("Map script initialized and map set up.");
+
+        // Periodically check bridge availability
+        setInterval(function() {
+            if (typeof java === 'undefined' && typeof window.setBridge === 'function') {
+                window.setBridge();
+                alert("Reinitializing Java bridge...");
+            }
+        }, 1000); // Check every second
     });
 
-    // Placeholder for Java to set the bridge
     window.setBridge = function() {
         alert("Bridge setup triggered from JavaScript.");
     };
 </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9392d8edcdb1b087',t:'MTc0NjEzOTkyNi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
 </body>
 </html>
