@@ -15,9 +15,9 @@
         <Label text="End Point ID:" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
         <TextField fx:id="routeEndPointField" GridPane.columnIndex="1" GridPane.rowIndex="1" prefWidth="250"/>
         <HBox spacing="10" alignment="CENTER" GridPane.columnIndex="0" GridPane.rowIndex="2" GridPane.columnSpan="2">
-            <Button fx:id="addRouteButton" text="Add" prefWidth="90"/>
-            <Button fx:id="updateRouteButton" text="Update" prefWidth="90"/>
-            <Button fx:id="clearRouteButton" text="Clear" prefWidth="90"/>
+            <Button fx:id="addRouteButton" text="Add" prefWidth="90" onAction="#addRoute"/>
+            <Button fx:id="updateRouteButton" text="Update" prefWidth="90" onAction="#updateRoute"/>
+            <Button fx:id="clearRouteButton" text="Clear" prefWidth="90" onAction="#clearRouteFields"/>
             <Button fx:id="selectRouteButton" text="Select on Map" prefWidth="120"/>
         </HBox>
     </GridPane>
@@ -31,7 +31,7 @@
         </columns>
     </TableView>
     <HBox spacing="10" alignment="CENTER">
-        <Button fx:id="deleteRouteButton" text="Delete Selected" prefWidth="180"/>
+        <Button fx:id="deleteRouteButton" text="Delete Selected" prefWidth="180" onAction="#deleteRoute"/>
         <Button fx:id="removeAllButton" text="Remove All" prefWidth="180" onAction="#removeAll"/>
     </HBox>
 </VBox>

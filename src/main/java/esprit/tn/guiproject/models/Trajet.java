@@ -4,11 +4,10 @@ import java.sql.Time;
 
 public class Trajet {
     private int id;
-    private Integer pointDepart; // Nullable, references pointinteret ID or null for temporary points
-    private Integer pointArrivee; // Nullable, references pointinteret ID or null for temporary points
-    private Double distance;
+    private Integer pointDepart;
+    private Integer pointArrivee;
+    private double distance;
     private Time tempsEstime;
-    // Temporary point data when not in pointinteret
     private Double startLatitude;
     private Double startLongitude;
     private String startNom;
@@ -18,13 +17,13 @@ public class Trajet {
     private String endNom;
     private String endType;
 
-    public Trajet() {
-    }
+    // Default constructor
+    public Trajet() {}
 
-    // Constructor for temporary points
-    public Trajet(PointInteret start, PointInteret end, Double distance, Time tempsEstime) {
+    // Constructor for map-selected routes
+    public Trajet(PointInteret start, PointInteret end, double distance, Time estimatedTime) {
         this.distance = distance;
-        this.tempsEstime = tempsEstime;
+        this.tempsEstime = estimatedTime;
         if (start.getId() > 0) {
             this.pointDepart = start.getId();
         } else {
@@ -44,107 +43,42 @@ public class Trajet {
     }
 
     // Getters and Setters
-    public int getId() {
-        return id;
-    }
+    public int getId() { return id; }
+    public void setId(int id) { this.id = id; }
 
-    public void setId(int id) {
-        this.id = id;
-    }
+    public Integer getPointDepart() { return pointDepart; }
+    public void setPointDepart(Integer pointDepart) { this.pointDepart = pointDepart; }
 
-    public Integer getPointDepart() {
-        return pointDepart;
-    }
+    public Integer getPointArrivee() { return pointArrivee; }
+    public void setPointArrivee(Integer pointArrivee) { this.pointArrivee = pointArrivee; }
 
-    public void setPointDepart(Integer pointDepart) {
-        this.pointDepart = pointDepart;
-    }
+    public double getDistance() { return distance; }
+    public void setDistance(double distance) { this.distance = distance; }
 
-    public Integer getPointArrivee() {
-        return pointArrivee;
-    }
+    public Time getTempsEstime() { return tempsEstime; }
+    public void setTempsEstime(Time tempsEstime) { this.tempsEstime = tempsEstime; }
 
-    public void setPointArrivee(Integer pointArrivee) {
-        this.pointArrivee = pointArrivee;
-    }
+    public Double getStartLatitude() { return startLatitude; }
+    public void setStartLatitude(Double startLatitude) { this.startLatitude = startLatitude; }
 
-    public Double getDistance() {
-        return distance;
-    }
+    public Double getStartLongitude() { return startLongitude; }
+    public void setStartLongitude(Double startLongitude) { this.startLongitude = startLongitude; }
 
-    public void setDistance(Double distance) {
-        this.distance = distance;
-    }
+    public String getStartNom() { return startNom; }
+    public void setStartNom(String startNom) { this.startNom = startNom; }
 
-    public Time getTempsEstime() {
-        return tempsEstime;
-    }
+    public String getStartType() { return startType; }
+    public void setStartType(String startType) { this.startType = startType; }
 
-    public void setTempsEstime(Time tempsEstime) {
-        this.tempsEstime = tempsEstime;
-    }
+    public Double getEndLatitude() { return endLatitude; }
+    public void setEndLatitude(Double endLatitude) { this.endLatitude = endLatitude; }
 
-    public Double getStartLatitude() {
-        return startLatitude;
-    }
+    public Double getEndLongitude() { return endLongitude; }
+    public void setEndLongitude(Double endLongitude) { this.endLongitude = endLongitude; }
 
-    public void setStartLatitude(Double startLatitude) {
-        this.startLatitude = startLatitude;
-    }
+    public String getEndNom() { return endNom; }
+    public void setEndNom(String endNom) { this.endNom = endNom; }
 
-    public Double getStartLongitude() {
-        return startLongitude;
-    }
-
-    public void setStartLongitude(Double startLongitude) {
-        this.startLongitude = startLongitude;
-    }
-
-    public String getStartNom() {
-        return startNom;
-    }
-
-    public void setStartNom(String startNom) {
-        this.startNom = startNom;
-    }
-
-    public String getStartType() {
-        return startType;
-    }
-
-    public void setStartType(String startType) {
-        this.startType = startType;
-    }
-
-    public Double getEndLatitude() {
-        return endLatitude;
-    }
-
-    public void setEndLatitude(Double endLatitude) {
-        this.endLatitude = endLatitude;
-    }
-
-    public Double getEndLongitude() {
-        return endLongitude;
-    }
-
-    public void setEndLongitude(Double endLongitude) {
-        this.endLongitude = endLongitude;
-    }
-
-    public String getEndNom() {
-        return endNom;
-    }
-
-    public void setEndNom(String endNom) {
-        this.endNom = endNom;
-    }
-
-    public String getEndType() {
-        return endType;
-    }
-
-    public void setEndType(String endType) {
-        this.endType = endType;
-    }
+    public String getEndType() { return endType; }
+    public void setEndType(String endType) { this.endType = endType; }
 }
