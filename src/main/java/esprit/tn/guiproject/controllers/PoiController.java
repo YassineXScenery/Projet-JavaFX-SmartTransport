@@ -31,6 +31,13 @@ public class PoiController {
 
     private PointInteretService poiService = new PointInteretService();
     private ObservableList<PointInteret> poiList = FXCollections.observableArrayList();
+    private MapController mapController; // Add reference to MapController
+
+    // Method to set MapController reference
+    public void setMapController(MapController mapController) {
+        this.mapController = mapController;
+        System.out.println("MapController set in PoiController to: " + (mapController != null ? "not null" : "null"));
+    }
 
     @FXML
     public void initialize() {
@@ -47,6 +54,13 @@ public class PoiController {
         poiTable.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
             if (newSelection != null) {
                 populatePoiFields(newSelection);
+                // Center map on selected POI
+                if (mapController != null) {
+                    mapController.centerMap(newSelection.getLatitude(), newSelection.getLongitude());
+                    System.out.println("Centered map on POI: lat=" + newSelection.getLatitude() + ", lng=" + newSelection.getLongitude());
+                } else {
+                    System.out.println("MapController is null, cannot center map.");
+                }
             }
         });
 

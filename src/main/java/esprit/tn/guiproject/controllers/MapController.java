@@ -60,11 +60,26 @@ public class MapController {
     public void setPoiController(PoiController controller) {
         this.poiController = controller;
         System.out.println("PoiController set in MapController to: " + (controller != null ? "not null" : "null"));
+        if (controller != null) {
+            controller.setMapController(this);
+        }
     }
 
     public void setTrajetController(TrajetController controller) {
         this.trajetController = controller;
         System.out.println("TrajetController set in MapController.");
+    }
+
+    public void centerMap(double latitude, double longitude) {
+        System.out.println("centerMap called: lat=" + latitude + ", lng=" + longitude);
+        try {
+            String script = String.format("map.setView([%f, %f], 20);", latitude, longitude); // Changed zoom from 13 to 15
+            webEngine.executeScript(script);
+            System.out.println("Map centered and zoomed at: lat=" + latitude + ", lng=" + longitude);
+        } catch (Exception e) {
+            System.out.println("Error centering map: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     private void setupMapAndBridge() {
@@ -302,7 +317,6 @@ public class MapController {
                     webEngine.executeScript(script);
                     System.out.println("Route drawn via JavaScript: " + script);
 
-                    // Call TrajetController directly
                     if (trajetController != null) {
                         System.out.println("Calling trajetController.createTrajetFromRoute");
                         Platform.runLater(() -> {
@@ -355,7 +369,6 @@ public class MapController {
                     return;
                 }
 
-                // Use existing startPoint/endPoint if available, otherwise fetch or create
                 if (startId != null && startId > 0) {
                     startPoint = poiService.getById(startId);
                     System.out.println("Fetched startPoint from DB: id=" + startId +
