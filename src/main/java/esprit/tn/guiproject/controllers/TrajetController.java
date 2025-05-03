@@ -462,6 +462,9 @@ public class TrajetController {
                 return;
             }
 
+            // Clear the map to remove any existing routes and markers
+            mapController.clearMap();
+
             Double startLat = null, startLng = null, endLat = null, endLng = null;
 
             // Try to get coordinates from PointInteret if point_depart/point_arrivee exist

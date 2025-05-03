@@ -73,7 +73,7 @@ public class MapController {
     public void centerMap(double latitude, double longitude) {
         System.out.println("centerMap called: lat=" + latitude + ", lng=" + longitude);
         try {
-            String script = String.format("map.setView([%f, %f], 20);", latitude, longitude); // Changed zoom from 13 to 15
+            String script = String.format("map.setView([%f, %f], 20);", latitude, longitude);
             webEngine.executeScript(script);
             System.out.println("Map centered and zoomed at: lat=" + latitude + ", lng=" + longitude);
         } catch (Exception e) {
@@ -168,6 +168,9 @@ public class MapController {
             webEngine.executeScript("clearMap();");
             System.out.println("Map cleared of routes and markers.");
             routeInProgress = false;
+            isSelectingRoute = false;
+            startPoint = null;
+            endPoint = null;
         } catch (Exception e) {
             System.out.println("Error clearing map: " + e.getMessage());
             e.printStackTrace();
@@ -239,8 +242,23 @@ public class MapController {
 
         private void handleRoutePointSelection(double lat, double lng, Integer id, String pointType) {
             try {
+                // Handle null or empty pointType
+                if (pointType == null || pointType.isEmpty()) {
+                    if (startPoint == null) {
+                        pointType = "start";
+                        System.out.println("Inferred pointType=start for null input");
+                    } else if (endPoint == null && startPoint != null) {
+                        pointType = "end";
+                        System.out.println("Inferred pointType=end for null input");
+                    } else {
+                        System.out.println("Invalid state for null pointType: startPoint=" + (startPoint != null) +
+                                ", endPoint=" + (endPoint != null));
+                        return;
+                    }
+                }
+
                 PointInteret point = id != null && id > 0 ? poiService.getById(id) : null;
-                if (pointType != null && pointType.equals("start") && startPoint == null) {
+                if (pointType.equals("start") && startPoint == null) {
                     startPoint = point != null ? point : new PointInteret(lat, lng, "Start Point", "Route");
                     if (point == null) {
                         startPoint.setId(tempIdCounter.decrementAndGet());
@@ -249,8 +267,17 @@ public class MapController {
                             ", lat=" + startPoint.getLatitude() +
                             ", lng=" + startPoint.getLongitude() +
                             ", nom=" + startPoint.getNom());
-                    controller.addMarkerToMap(startPoint);
-                } else if (pointType != null && pointType.equals("end") && endPoint == null && startPoint != null) {
+                    // Add to routeLayer instead of poiLayer
+                    String script = String.format(
+                            "addRouteMarker(%f, %f, '%s', %s, 'start');",
+                            startPoint.getLatitude(),
+                            startPoint.getLongitude(),
+                            startPoint.getNom(),
+                            startPoint.getId() > 0 ? startPoint.getId() : "null"
+                    );
+                    webEngine.executeScript(script);
+                    System.out.println("Added start marker to routeLayer via addRouteMarker");
+                } else if (pointType.equals("end") && endPoint == null && startPoint != null) {
                     endPoint = point != null ? point : new PointInteret(lat, lng, "End Point", "Route");
                     if (point == null) {
                         endPoint.setId(tempIdCounter.decrementAndGet());
@@ -259,7 +286,16 @@ public class MapController {
                             ", lat=" + endPoint.getLatitude() +
                             ", lng=" + endPoint.getLongitude() +
                             ", nom=" + endPoint.getNom());
-                    controller.addMarkerToMap(endPoint);
+                    // Add to routeLayer instead of poiLayer
+                    String script = String.format(
+                            "addRouteMarker(%f, %f, '%s', %s, 'end');",
+                            endPoint.getLatitude(),
+                            endPoint.getLongitude(),
+                            endPoint.getNom(),
+                            endPoint.getId() > 0 ? endPoint.getId() : "null"
+                    );
+                    webEngine.executeScript(script);
+                    System.out.println("Added end marker to routeLayer via addRouteMarker");
                     calculateRoute();
                     isSelectingRoute = false;
                 } else {
@@ -395,11 +431,29 @@ public class MapController {
                             ", lat=" + lat2 + ", lng=" + lng2);
                 }
 
+                // Add markers to routeLayer instead of poiLayer
+                String startScript = String.format(
+                        "addRouteMarker(%f, %f, '%s', %s, 'start');",
+                        startPoint.getLatitude(),
+                        startPoint.getLongitude(),
+                        startPoint.getNom(),
+                        startPoint.getId() > 0 ? startPoint.getId() : "null"
+                );
+                webEngine.executeScript(startScript);
+                System.out.println("Added start marker to routeLayer via addRouteMarker");
+
+                String endScript = String.format(
+                        "addRouteMarker(%f, %f, '%s', %s, 'end');",
+                        endPoint.getLatitude(),
+                        endPoint.getLongitude(),
+                        endPoint.getNom(),
+                        endPoint.getId() > 0 ? endPoint.getId() : "null"
+                );
+                webEngine.executeScript(endScript);
+                System.out.println("Added end marker to routeLayer via addRouteMarker");
+
                 long seconds = (long) (timeInMinutes * 60);
                 Time estimatedTime = new Time(seconds * 1000);
-
-                controller.addMarkerToMap(startPoint);
-                controller.addMarkerToMap(endPoint);
 
                 if (trajetController != null) {
                     System.out.println("Calling trajetController.createTrajetFromRoute from Java bridge");
