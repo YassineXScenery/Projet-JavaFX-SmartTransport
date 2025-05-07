@@ -4,11 +4,19 @@ import esprit.tn.guiproject.models.PointInteret;
 import esprit.tn.guiproject.services.PointInteretService;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
+import javafx.scene.control.Label;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 import netscape.javascript.JSObject;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import org.json.JSONObject;
+import org.json.JSONArray;
 import java.sql.Time;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Logger;
 
 public class MapController {
     @FXML
@@ -23,6 +31,16 @@ public class MapController {
     private TrajetController trajetController;
     private boolean routeInProgress = false;
 
+    // Weather display fields
+    @FXML
+    private Label temperatureLabel;
+    @FXML
+    private Label descriptionLabel;
+    @FXML
+    private Label humidityLabel;
+
+    private static final Logger LOGGER = Logger.getLogger(MapController.class.getName());
+
     @FXML
     public void initialize() {
         System.out.println("MapController initialize called.");
@@ -32,10 +50,25 @@ public class MapController {
         }
         System.out.println("mapWebView successfully injected.");
 
+        // Verify weather labels initialization
+        if (temperatureLabel == null || descriptionLabel == null || humidityLabel == null) {
+            System.out.println("Warning: One or more weather labels are null. Check FXML injection.");
+            System.out.println("Temperature Label: " + (temperatureLabel != null ? "initialized" : "null"));
+            System.out.println("Description Label: " + (descriptionLabel != null ? "initialized" : "null"));
+            System.out.println("Humidity Label: " + (humidityLabel != null ? "initialized" : "null"));
+        } else {
+            System.out.println("All weather labels initialized successfully.");
+            // Set initial values
+            temperatureLabel.setText("Temperature: N/A");
+            descriptionLabel.setText("Description: N/A");
+            humidityLabel.setText("Humidity: N/A");
+        }
+
         poiService = new PointInteretService();
         webEngine = mapWebView.getEngine();
         webEngine.setJavaScriptEnabled(true);
         webEngine.setOnAlert(event -> System.out.println("JavaScript Alert: " + event.getData()));
+        webEngine.setOnError(event -> LOGGER.severe("WebView Error: " + event.getMessage()));
 
         String mapHtml = getClass().getResource("/esprit/tn/guiproject/views/map.html").toExternalForm();
         if (mapHtml == null) {
@@ -50,11 +83,9 @@ public class MapController {
                 System.out.println("Map HTML loaded successfully.");
                 Platform.runLater(() -> setupMapAndBridge());
             } else if (newVal == javafx.concurrent.Worker.State.FAILED) {
-                System.out.println("Failed to load map.html.");
+                LOGGER.severe("Failed to load map.html: " + webEngine.getLoadWorker().getException());
             }
         });
-
-        webEngine.setOnError(event -> System.out.println("WebView Error: " + event.getMessage()));
     }
 
     public void setPoiController(PoiController controller) {
@@ -77,8 +108,7 @@ public class MapController {
             webEngine.executeScript(script);
             System.out.println("Map centered and zoomed at: lat=" + latitude + ", lng=" + longitude);
         } catch (Exception e) {
-            System.out.println("Error centering map: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.severe("Error centering map: " + e.getMessage());
         }
     }
 
@@ -101,20 +131,19 @@ public class MapController {
                         System.out.println("Java bridge registered with window object.");
                         webEngine.executeScript("if (typeof java !== 'undefined') { alert('Java bridge is accessible'); } else { alert('Java bridge not accessible'); }");
                     } catch (Exception e) {
-                        System.out.println("Error setting up Java bridge: " + e.getMessage());
-                        e.printStackTrace();
+                        LOGGER.severe("Error setting up Java bridge: " + e.getMessage());
                     }
                 } else {
                     Thread.sleep(100);
                     attempts++;
                 }
             } catch (Exception e) {
-                System.out.println("Error checking map readiness: " + e.getMessage());
+                LOGGER.severe("Error checking map readiness: " + e.getMessage());
                 break;
             }
         }
         if (!isReady) {
-            System.out.println("Failed to initialize map after " + maxAttempts + " attempts.");
+            LOGGER.severe("Failed to initialize map after " + maxAttempts + " attempts.");
         }
     }
 
@@ -141,8 +170,7 @@ public class MapController {
             webEngine.executeScript(script);
             System.out.println("Added marker for POI: " + poi.getNom());
         } catch (Exception e) {
-            System.out.println("Error adding marker: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.severe("Error adding marker: " + e.getMessage());
         }
     }
 
@@ -158,8 +186,7 @@ public class MapController {
             webEngine.executeScript(script);
             System.out.println("Displayed route on map, distance: " + distance + " km");
         } catch (Exception e) {
-            System.out.println("Error displaying route: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.severe("Error displaying route: " + e.getMessage());
         }
     }
 
@@ -172,15 +199,23 @@ public class MapController {
             startPoint = null;
             endPoint = null;
         } catch (Exception e) {
-            System.out.println("Error clearing map: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.severe("Error clearing map: " + e.getMessage());
         }
     }
 
     public double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
         System.out.println("calculateDistance called: lat1=" + lat1 + ", lon1=" + lon1 +
                 ", lat2=" + lat2 + ", lon2=" + lon2);
-        return bridgeInstance.calculateDistance(lat1, lon1, lat2, lon2);
+        final int R = 6371; // Earth's radius in km
+        double latDistance = Math.toRadians(lat2 - lat1);
+        double lonDistance = Math.toRadians(lon2 - lon1);
+        double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2) +
+                Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
+                        Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        double distance = R * c;
+        System.out.println("Calculated distance: " + distance + " km");
+        return distance;
     }
 
     public void startRouteSelection() {
@@ -193,8 +228,7 @@ public class MapController {
             webEngine.executeScript("startRouteSelection();");
             System.out.println("JavaScript startRouteSelection invoked.");
         } catch (Exception e) {
-            System.out.println("Error invoking startRouteSelection: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.severe("Error invoking startRouteSelection: " + e.getMessage());
         }
     }
 
@@ -204,6 +238,7 @@ public class MapController {
 
         public MapBridge() {
             this.controller = MapController.this;
+            System.out.println("MapBridge initialized with controller: " + (controller != null ? "not null" : "null"));
         }
 
         public void onMapClick(double lat, double lng, Integer id, String pointType) {
@@ -211,11 +246,21 @@ public class MapController {
                     ", id=" + id + ", pointType=" + pointType +
                     ", isSelectingRoute=" + isSelectingRoute +
                     ", poiController=" + (controller.poiController != null));
+            
+            // Log weather label status at click time
+            System.out.println("Weather labels status at click - Temperature: " + (controller.temperatureLabel != null ? "available" : "null") +
+                    ", Description: " + (controller.descriptionLabel != null ? "available" : "null") +
+                    ", Humidity: " + (controller.humidityLabel != null ? "available" : "null"));
+
             try {
                 if (lat == 0.0 || lng == 0.0) {
                     System.out.println("Invalid coordinates: lat=" + lat + ", lng=" + lng);
                     return;
                 }
+
+                // Always fetch weather data on map click
+                System.out.println("Initiating weather fetch for coordinates: lat=" + lat + ", lng=" + lng);
+                fetchWeather(lat, lng);
 
                 if (isSelectingRoute) {
                     System.out.println("Handling route point selection...");
@@ -235,14 +280,13 @@ public class MapController {
                     handlePOICreation(lat, lng);
                 }
             } catch (Exception e) {
-                System.out.println("Error in onMapClick: " + e.getMessage());
+                LOGGER.severe("Error in onMapClick: " + e.getMessage());
                 e.printStackTrace();
             }
         }
 
         private void handleRoutePointSelection(double lat, double lng, Integer id, String pointType) {
             try {
-                // Handle null or empty pointType
                 if (pointType == null || pointType.isEmpty()) {
                     if (startPoint == null) {
                         pointType = "start";
@@ -267,7 +311,6 @@ public class MapController {
                             ", lat=" + startPoint.getLatitude() +
                             ", lng=" + startPoint.getLongitude() +
                             ", nom=" + startPoint.getNom());
-                    // Add to routeLayer instead of poiLayer
                     String script = String.format(
                             "addRouteMarker(%f, %f, '%s', %s, 'start');",
                             startPoint.getLatitude(),
@@ -286,7 +329,6 @@ public class MapController {
                             ", lat=" + endPoint.getLatitude() +
                             ", lng=" + endPoint.getLongitude() +
                             ", nom=" + endPoint.getNom());
-                    // Add to routeLayer instead of poiLayer
                     String script = String.format(
                             "addRouteMarker(%f, %f, '%s', %s, 'end');",
                             endPoint.getLatitude(),
@@ -304,8 +346,7 @@ public class MapController {
                             ", endPoint=" + (endPoint != null));
                 }
             } catch (Exception e) {
-                System.out.println("Error in handleRoutePointSelection: " + e.getMessage());
-                e.printStackTrace();
+                LOGGER.severe("Error in handleRoutePointSelection: " + e.getMessage());
             }
         }
 
@@ -321,8 +362,7 @@ public class MapController {
                 System.out.println("Created new POI: id=" + id + ", lat=" + lat + ", lng=" + lng);
                 controller.addMarkerToMap(poi);
             } catch (Exception e) {
-                System.out.println("Error in handlePOICreation: " + e.getMessage());
-                e.printStackTrace();
+                LOGGER.severe("Error in handlePOICreation: " + e.getMessage());
             }
         }
 
@@ -369,8 +409,7 @@ public class MapController {
                     routeInProgress = false;
                 }
             } catch (Exception e) {
-                System.out.println("Error in calculateRoute: " + e.getMessage());
-                e.printStackTrace();
+                LOGGER.severe("Error in calculateRoute: " + e.getMessage());
                 routeInProgress = false;
             }
         }
@@ -431,7 +470,6 @@ public class MapController {
                             ", lat=" + lat2 + ", lng=" + lng2);
                 }
 
-                // Add markers to routeLayer instead of poiLayer
                 String startScript = String.format(
                         "addRouteMarker(%f, %f, '%s', %s, 'start');",
                         startPoint.getLatitude(),
@@ -466,10 +504,108 @@ public class MapController {
                     routeInProgress = false;
                 }
             } catch (Exception e) {
-                System.out.println("Error in createTrajetFromRoute: " + e.getMessage());
-                e.printStackTrace();
+                LOGGER.severe("Error in createTrajetFromRoute: " + e.getMessage());
                 routeInProgress = false;
             }
         }
+
+        private void fetchWeather(double lat, double lng) {
+            if (temperatureLabel == null || descriptionLabel == null || humidityLabel == null) {
+                System.out.println("Error: Weather labels not initialized. Cannot update weather information.");
+                return;
+            }
+
+            String apiKey = "b8b223d150fcf2eeafba803b1be226c7";
+            String url = String.format("https://api.openweathermap.org/data/2.5/weather?lat=%f&lon=%f&appid=%s&units=metric", lat, lng, apiKey);
+            System.out.println("Fetching weather from URL: " + url);
+
+            try {
+                HttpClient client = HttpClient.newHttpClient();
+                HttpRequest request = HttpRequest.newBuilder()
+                        .uri(URI.create(url))
+                        .build();
+                
+                System.out.println("Sending HTTP request to weather API...");
+                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+                System.out.println("Received response with status: " + response.statusCode());
+
+                if (response.statusCode() != 200) {
+                    System.out.println("Weather API request failed with status: " + response.statusCode());
+                    Platform.runLater(() -> {
+                        temperatureLabel.setText("Temperature: Error");
+                        descriptionLabel.setText("Description: Error");
+                        humidityLabel.setText("Humidity: Error");
+                    });
+                    return;
+                }
+
+                String responseBody = response.body();
+                System.out.println("Weather API Response Body: " + responseBody);
+
+                JSONObject json = new JSONObject(responseBody);
+                if (!json.has("main") || !json.has("weather")) {
+                    System.out.println("Weather API response missing required fields");
+                    Platform.runLater(() -> {
+                        temperatureLabel.setText("Temperature: Error");
+                        descriptionLabel.setText("Description: Error");
+                        humidityLabel.setText("Humidity: Error");
+                    });
+                    return;
+                }
+
+                double temp = json.getJSONObject("main").getDouble("temp");
+                JSONArray weatherArray = json.getJSONArray("weather");
+                String description = weatherArray.getJSONObject(0).getString("description");
+                int humidity = json.getJSONObject("main").getInt("humidity");
+
+                System.out.println("Parsed weather data - Temp: " + temp + "°C, Description: " + description + ", Humidity: " + humidity + "%");
+
+                Platform.runLater(() -> {
+                    try {
+                        temperatureLabel.setText(String.format("Temperature: %.1f°C", temp));
+                        descriptionLabel.setText("Description: " + description);
+                        humidityLabel.setText("Humidity: " + humidity + "%");
+                        System.out.println("Weather labels updated successfully");
+                    } catch (Exception e) {
+                        System.out.println("Error updating weather labels: " + e.getMessage());
+                        e.printStackTrace();
+                    }
+                });
+            } catch (Exception e) {
+                System.out.println("Error fetching weather data: " + e.getMessage());
+                e.printStackTrace();
+                Platform.runLater(() -> {
+                    temperatureLabel.setText("Temperature: Error");
+                    descriptionLabel.setText("Description: Error");
+                    humidityLabel.setText("Humidity: Error");
+                });
+            }
+        }
+    }
+
+    // Getter methods for weather labels
+    public Label getTemperatureLabel() {
+        return temperatureLabel;
+    }
+
+    public Label getDescriptionLabel() {
+        return descriptionLabel;
+    }
+
+    public Label getHumidityLabel() {
+        return humidityLabel;
+    }
+
+    // Setter methods for weather labels (added to allow injection)
+    public void setTemperatureLabel(Label temperatureLabel) {
+        this.temperatureLabel = temperatureLabel;
+    }
+
+    public void setDescriptionLabel(Label descriptionLabel) {
+        this.descriptionLabel = descriptionLabel;
+    }
+
+    public void setHumidityLabel(Label humidityLabel) {
+        this.humidityLabel = humidityLabel;
     }
 }

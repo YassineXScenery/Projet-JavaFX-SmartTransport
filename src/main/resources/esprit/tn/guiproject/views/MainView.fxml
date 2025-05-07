@@ -3,6 +3,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.text.*?>
 
 <ScrollPane fitToWidth="true" prefHeight="700.0" prefWidth="1000.0" style="-fx-background-color: #f4f4f4;" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
     <content>
@@ -12,6 +13,14 @@
             </padding>
             <!-- Map Section -->
             <BorderPane fx:id="mapPane" prefHeight="400" minHeight="400" maxHeight="400" style="-fx-background-color: #ffffff;"/>
+
+            <!-- Weather Section -->
+            <VBox fx:id="weatherVBox" spacing="10" alignment="CENTER" style="-fx-background-color: #ffffff; -fx-padding: 10; -fx-border-color: #d3d3d3; -fx-border-width: 1;">
+                <Label fx:id="weatherLabel" text="Weather Information" style="-fx-font-weight: bold; -fx-font-size: 16;"/>
+                <Label fx:id="temperatureLabel" text="Temperature: N/A"/>
+                <Label fx:id="descriptionLabel" text="Description: N/A"/>
+                <Label fx:id="humidityLabel" text="Humidity: N/A"/>
+            </VBox>
 
             <!-- CRUD Section for Trajet and POI -->
             <HBox fx:id="crudHBox" spacing="30" alignment="CENTER" style="-fx-padding: 20;"/>

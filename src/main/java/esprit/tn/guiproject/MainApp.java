@@ -76,7 +76,13 @@ public class MainApp extends Application {
                 mapController.setPoiController(poiController);
                 mapController.setTrajetController(trajetController);
                 trajetController.setMapController(mapController);
-                System.out.println("Controllers wired successfully in MainApp.");
+
+                // Inject weather labels into MapController
+                mapController.setTemperatureLabel((javafx.scene.control.Label) mainLoader.getNamespace().get("temperatureLabel"));
+                mapController.setDescriptionLabel((javafx.scene.control.Label) mainLoader.getNamespace().get("descriptionLabel"));
+                mapController.setHumidityLabel((javafx.scene.control.Label) mainLoader.getNamespace().get("humidityLabel"));
+
+                LOGGER.info("Controllers wired successfully in MainApp.");
             } else {
                 LOGGER.severe("Error: One or more controllers not found.");
                 return;
@@ -90,10 +96,8 @@ public class MainApp extends Application {
             primaryStage.show();
         } catch (IOException e) {
             LOGGER.severe("IOException while loading FXML: " + e.getMessage());
-            e.printStackTrace();
         } catch (Exception e) {
             LOGGER.severe("Unexpected error: " + e.getMessage());
-            e.printStackTrace();
         }
     }
 

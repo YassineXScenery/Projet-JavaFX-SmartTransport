@@ -21,8 +21,9 @@
         attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(map);
 
-    // Layer group for POI markers
+    // Layer groups for POI and route markers
     var poiLayer = L.layerGroup().addTo(map);
+    var routeLayer = L.layerGroup().addTo(map);
     var routeControl = null;
     var startMarker = null;
     var endMarker = null;
@@ -32,6 +33,16 @@
     // Custom red icon for POI markers
     var poiIcon = L.icon({
         iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+        shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41]
+    });
+
+    // Custom blue icon for route markers
+    var routeIcon = L.icon({
+        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
         shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
         iconSize: [25, 41],
         iconAnchor: [12, 41],
@@ -61,7 +72,7 @@
                     console.log('Called java.onMapClick for POI update: lat=' + lat + ', lng=' + lng);
                 }
             } catch (e) {
-                console.error('Error calling java.onMapClick: ' + e.message);
+                console.error('Error calling java methods: ' + e.message);
             }
         } else {
             console.error('Java bridge not available for map click');
@@ -72,41 +83,75 @@
         console.log('addMarker called: lat=' + lat + ', lng=' + lng + ', name=' + name + ', type=' + type + ', id=' + id);
         var marker = L.marker([lat, lng], {
             title: name + " (ID: " + id + ")",
-            icon: poiIcon // Use custom red icon for POI markers
+            icon: poiIcon
         })
             .bindPopup("<b>" + name + "</b><br>Type: " + type + "<br>ID: " + id)
             .on('click', function(e) {
                 console.log('Marker clicked: id=' + id + ', isSelectingRoute=' + isSelectingRoute);
                 if (isSelectingRoute && !startMarker) {
-                    startMarker = L.marker([lat, lng]).addTo(map).bindPopup("Start Point (ID: " + id + ")").openPopup();
+                    startMarker = L.marker([lat, lng], { icon: routeIcon }).addTo(routeLayer).bindPopup("Start Point (ID: " + id + ")").openPopup();
                     if (typeof window.java !== 'undefined') {
                         try {
                             window.java.onMapClick(lat, lng, id, "start");
-                            console.log('Called java.onMapClick for start: lat=' + lat + ', lng=' + lng + ', id=' + id);
+                            window.java.fetchWeather(lat, lng);
+                            console.log('Called java.onMapClick and java.fetchWeather for start: lat=' + lat + ', lng=' + lng + ', id=' + id);
                         } catch (e) {
-                            console.error('Error calling java.onMapClick for start: ' + e.message);
+                            console.error('Error calling java methods for start: ' + e.message);
                         }
                     } else {
                         console.error('Java bridge not available for start marker');
                     }
                 } else if (isSelectingRoute && !endMarker && startMarker) {
-                    endMarker = L.marker([lat, lng]).addTo(map).bindPopup("End Point (ID: " + id + ")").openPopup();
+                    endMarker = L.marker([lat, lng], { icon: routeIcon }).addTo(routeLayer).bindPopup("End Point (ID: " + id + ")").openPopup();
                     if (typeof window.java !== 'undefined') {
                         try {
                             window.java.onMapClick(lat, lng, id, "end");
-                            console.log('Called java.onMapClick for end: lat=' + lat + ', lng=' + lng + ', id=' + id);
+                            window.java.fetchWeather(lat, lng);
+                            console.log('Called java.onMapClick and java.fetchWeather for end: lat=' + lat + ', lng=' + lng + ', id=' + id);
                         } catch (e) {
-                            console.error('Error calling java.onMapClick for end: ' + e.message);
+                            console.error('Error calling java methods for end: ' + e.message);
                         }
                     } else {
                         console.error('Java bridge not available for end marker');
                     }
                     calculateRoute();
+                } else {
+                    if (typeof window.java !== 'undefined') {
+                        try {
+                            window.java.fetchWeather(lat, lng);
+                            console.log('Called java.fetchWeather for marker: lat=' + lat + ', lng=' + lng);
+                        } catch (e) {
+                            console.error('Error calling java.fetchWeather: ' + e.message);
+                        }
+                    }
                 }
             });
-        // Add marker to poiLayer instead of map
         poiLayer.addLayer(marker);
         console.log('Added POI marker to poiLayer: id=' + id);
+    }
+
+    function addRouteMarker(lat, lng, name, id, pointType) {
+        console.log('addRouteMarker called: lat=' + lat + ', lng=' + lng + ', name=' + name + ', id=' + id + ', pointType=' + pointType);
+        var popupText = pointType === 'start' ? "Start Point" : "End Point";
+        if (id !== 'null' && id !== null) {
+            popupText += " (ID: " + id + ")";
+        }
+        var marker = L.marker([lat, lng], { icon: routeIcon })
+            .bindPopup(popupText)
+            .openPopup();
+        if (pointType === 'start') {
+            if (startMarker) {
+                routeLayer.removeLayer(startMarker);
+            }
+            startMarker = marker;
+        } else if (pointType === 'end') {
+            if (endMarker) {
+                routeLayer.removeLayer(endMarker);
+            }
+            endMarker = marker;
+        }
+        routeLayer.addLayer(marker);
+        console.log('Added route marker to routeLayer: pointType=' + pointType + ', id=' + id);
     }
 
     function startRouteSelection() {
@@ -120,38 +165,40 @@
             routeControl = null;
         }
         if (startMarker) {
-            map.removeLayer(startMarker);
+            routeLayer.removeLayer(startMarker);
             startMarker = null;
         }
         if (endMarker) {
-            map.removeLayer(endMarker);
+            routeLayer.removeLayer(endMarker);
             endMarker = null;
         }
-        console.log('Route selection started, map cleared');
+        console.log('Route selection started, routeLayer cleared');
     }
 
     function handleRouteClick(lat, lng) {
         console.log('handleRouteClick: lat=' + lat + ', lng=' + lng);
         if (!startMarker) {
-            startMarker = L.marker([lat, lng]).addTo(map).bindPopup("Start Point (New)").openPopup();
+            startMarker = L.marker([lat, lng], { icon: routeIcon }).addTo(routeLayer).bindPopup("Start Point (New)").openPopup();
             if (typeof window.java !== 'undefined') {
                 try {
                     window.java.onMapClick(lat, lng, null, "start");
-                    console.log('Called java.onMapClick for start: lat=' + lat + ', lng=' + lng + ', id=null');
+                    window.java.fetchWeather(lat, lng);
+                    console.log('Called java.onMapClick and java.fetchWeather for start: lat=' + lat + ', lng=' + lng + ', id=null');
                 } catch (e) {
-                    console.error('Error calling java.onMapClick for start: ' + e.message);
+                    console.error('Error calling java methods for start: ' + e.message);
                 }
             } else {
                 console.error('Java bridge not available for start point');
             }
         } else if (!endMarker) {
-            endMarker = L.marker([lat, lng]).addTo(map).bindPopup("End Point (New)").openPopup();
+            endMarker = L.marker([lat, lng], { icon: routeIcon }).addTo(routeLayer).bindPopup("End Point (New)").openPopup();
             if (typeof window.java !== 'undefined') {
                 try {
                     window.java.onMapClick(lat, lng, null, "end");
-                    console.log('Called java.onMapClick for end: lat=' + lat + ', lng=' + lng + ', id=null');
+                    window.java.fetchWeather(lat, lng);
+                    console.log('Called java.onMapClick and java.fetchWeather for end: lat=' + lat + ', lng=' + lng + ', id=null');
                 } catch (e) {
-                    console.error('Error calling java.onMapClick for end: ' + e.message);
+                    console.error('Error calling java methods for end: ' + e.message);
                 }
             } else {
                 console.error('Java bridge not available for end point');
@@ -243,8 +290,8 @@
             map.removeControl(routeControl);
             routeControl = null;
         }
-        startMarker = L.marker([lat1, lng1]).addTo(map).bindPopup("Start Point").openPopup();
-        endMarker = L.marker([lat2, lng2]).addTo(map).bindPopup("End Point").openPopup();
+        startMarker = L.marker([lat1, lng1], { icon: routeIcon }).addTo(routeLayer).bindPopup("Start Point").openPopup();
+        endMarker = L.marker([lat2, lng2], { icon: routeIcon }).addTo(routeLayer).bindPopup("End Point").openPopup();
         routeControl = L.Routing.control({
             waypoints: [
                 L.latLng(lat1, lng1),
@@ -265,7 +312,6 @@
     function clearMap() {
         console.log('clearMap called');
         try {
-            // Remove route-related elements
             if (routeControl) {
                 console.log('Removing routeControl');
                 routeControl.removeEventListener('routesfound');
@@ -274,12 +320,12 @@
             }
             if (startMarker) {
                 console.log('Removing startMarker');
-                map.removeLayer(startMarker);
+                routeLayer.removeLayer(startMarker);
                 startMarker = null;
             }
             if (endMarker) {
                 console.log('Removing endMarker');
-                map.removeLayer(endMarker);
+                routeLayer.removeLayer(endMarker);
                 endMarker = null;
             }
             routeCalculated = false;
