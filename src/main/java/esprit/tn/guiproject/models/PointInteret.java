@@ -18,7 +18,6 @@ public class PointInteret {
         this.type = type;
     }
 
-    // New constructor to match MapController usage
     public PointInteret(double latitude, double longitude, String nom, String type) {
         this.latitude = latitude;
         this.longitude = longitude;
@@ -60,5 +59,11 @@ public class PointInteret {
     }
     public void setType(String type) {
         this.type = type;
+    }
+
+    // Override toString() for ComboBox display
+    @Override
+    public String toString() {
+        return "ID: " + id + " - Name: " + (nom != null ? nom : "Unknown");
     }
 }

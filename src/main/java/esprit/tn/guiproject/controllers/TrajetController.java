@@ -7,6 +7,7 @@ import esprit.tn.guiproject.services.PointInteretService;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -25,8 +26,8 @@ public class TrajetController {
     @FXML private TableColumn<Trajet, Integer> routeEndPointColumn;
     @FXML private TableColumn<Trajet, Time> routeTimeColumn;
 
-    @FXML private TextField routeStartPointField;
-    @FXML private TextField routeEndPointField;
+    @FXML private ComboBox<PointInteret> routeStartPointComboBox; // Editable ComboBox
+    @FXML private ComboBox<PointInteret> routeEndPointComboBox;   // Editable ComboBox
     @FXML private Button addRouteButton;
     @FXML private Button updateRouteButton;
     @FXML private Button deleteRouteButton;
@@ -37,20 +38,24 @@ public class TrajetController {
     private final TrajetService trajetService = new TrajetService();
     private final PointInteretService poiService = new PointInteretService();
     private final ObservableList<Trajet> routeList = FXCollections.observableArrayList();
+    private final ObservableList<PointInteret> pointInteretList = FXCollections.observableArrayList(); // For ComboBoxes
+    private FilteredList<PointInteret> filteredStartPoints; // For filtering
+    private FilteredList<PointInteret> filteredEndPoints;   // For filtering
     private MapController mapController;
 
     @FXML
     public void initialize() {
         System.out.println("TrajetController initialize called");
         System.out.println("routeTable: " + (routeTable != null ? "not null" : "null"));
-        System.out.println("routeStartPointField: " + (routeStartPointField != null ? "not null" : "null"));
-        System.out.println("routeEndPointField: " + (routeEndPointField != null ? "not null" : "null"));
+        System.out.println("routeStartPointComboBox: " + (routeStartPointComboBox != null ? "not null" : "null"));
+        System.out.println("routeEndPointComboBox: " + (routeEndPointComboBox != null ? "not null" : "null"));
         System.out.println("addRouteButton: " + (addRouteButton != null ? "not null" : "null"));
         System.out.println("updateRouteButton: " + (updateRouteButton != null ? "not null" : "null"));
         System.out.println("deleteRouteButton: " + (deleteRouteButton != null ? "not null" : "null"));
         System.out.println("clearRouteButton: " + (clearRouteButton != null ? "not null" : "null"));
         System.out.println("removeAllButton: " + (removeAllButton != null ? "not null" : "null"));
 
+        // Initialize TableView columns
         routeIdColumn.setCellValueFactory(new PropertyValueFactory<>("id"));
         routeDistanceColumn.setCellValueFactory(new PropertyValueFactory<>("distance"));
         routeStartPointColumn.setCellValueFactory(new PropertyValueFactory<>("pointDepart"));
@@ -59,10 +64,79 @@ public class TrajetController {
         routeTable.setItems(routeList);
         loadRouteData();
 
+        // Populate and configure ComboBoxes with filtering
+        loadPointInteretData();
+        routeStartPointComboBox.setEditable(true); // Enable editing for filtering
+        routeEndPointComboBox.setEditable(true);   // Enable editing for filtering
+
+        // Set the initial number of visible rows for the dropdown
+        routeStartPointComboBox.setVisibleRowCount(10); // Set to a reasonable maximum
+        routeEndPointComboBox.setVisibleRowCount(10);   // Set to a reasonable maximum
+
+        // Set up filtered lists
+        filteredStartPoints = new FilteredList<>(pointInteretList, p -> true);
+        filteredEndPoints = new FilteredList<>(pointInteretList, p -> true);
+
+        // Bind filtered lists to ComboBoxes
+        routeStartPointComboBox.setItems(filteredStartPoints);
+        routeEndPointComboBox.setItems(filteredEndPoints);
+
+        // Add listener to filter based on typed text for Start Point
+        routeStartPointComboBox.getEditor().textProperty().addListener((obs, oldValue, newValue) -> {
+            filteredStartPoints.setPredicate(point -> {
+                if (newValue == null || newValue.isEmpty()) {
+                    return true; // Show all if no text
+                }
+                String lowerCaseFilter = newValue.toLowerCase();
+                return point.getNom().toLowerCase().contains(lowerCaseFilter);
+            });
+            // Ensure the dropdown is visible when filtered
+            if (!filteredStartPoints.isEmpty()) {
+                routeStartPointComboBox.show();
+            } else {
+                routeStartPointComboBox.hide();
+            }
+            // When text is cleared, force the dropdown to resize by hiding and re-showing
+            if (newValue == null || newValue.isEmpty()) {
+                routeStartPointComboBox.hide();
+                Platform.runLater(() -> {
+                    if (routeStartPointComboBox.getEditor().isFocused()) {
+                        routeStartPointComboBox.show();
+                    }
+                });
+            }
+        });
+
+        // Add listener to filter based on typed text for End Point
+        routeEndPointComboBox.getEditor().textProperty().addListener((obs, oldValue, newValue) -> {
+            filteredEndPoints.setPredicate(point -> {
+                if (newValue == null || newValue.isEmpty()) {
+                    return true; // Show all if no text
+                }
+                String lowerCaseFilter = newValue.toLowerCase();
+                return point.getNom().toLowerCase().contains(lowerCaseFilter);
+            });
+            // Ensure the dropdown is visible when filtered
+            if (!filteredEndPoints.isEmpty()) {
+                routeEndPointComboBox.show();
+            } else {
+                routeEndPointComboBox.hide();
+            }
+            // When text is cleared, force the dropdown to resize by hiding and re-showing
+            if (newValue == null || newValue.isEmpty()) {
+                routeEndPointComboBox.hide();
+                Platform.runLater(() -> {
+                    if (routeEndPointComboBox.getEditor().isFocused()) {
+                        routeEndPointComboBox.show();
+                    }
+                });
+            }
+        });
+
+        // Handle TableView selection
         routeTable.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
             if (newSelection != null) {
                 populateRouteFields(newSelection);
-                // Display the selected route on the map
                 if (mapController != null) {
                     displayRouteOnMap(newSelection);
                     System.out.println("Displayed route for Trajet ID: " + newSelection.getId());
@@ -72,6 +146,7 @@ public class TrajetController {
             }
         });
 
+        // Set action for Select on Map button
         selectRouteButton.setOnAction(event -> {
             if (mapController != null) {
                 mapController.startRouteSelection();
@@ -81,6 +156,7 @@ public class TrajetController {
             }
         });
 
+        // Set button actions
         if (addRouteButton != null) {
             addRouteButton.setOnAction(event -> addRoute());
             System.out.println("Manually set onAction for addRouteButton");
@@ -129,32 +205,31 @@ public class TrajetController {
         System.out.println("Route data loaded: " + routeList.size() + " routes");
     }
 
+    private void loadPointInteretData() {
+        System.out.println("Loading PointInteret data...");
+        pointInteretList.clear();
+        pointInteretList.addAll(poiService.afficher());
+        System.out.println("PointInteret data loaded: " + pointInteretList.size() + " points");
+    }
+
     @FXML
     private void addRoute() {
         System.out.println("addRoute() method invoked");
         try {
-            String startInput = routeStartPointField.getText().trim();
-            String endInput = routeEndPointField.getText().trim();
-            System.out.println("Start ID input: '" + startInput + "', End ID input: '" + endInput + "'");
+            PointInteret startPoint = routeStartPointComboBox.getSelectionModel().getSelectedItem();
+            PointInteret endPoint = routeEndPointComboBox.getSelectionModel().getSelectedItem();
+            System.out.println("Selected Start Point: " + (startPoint != null ? startPoint.toString() : "null"));
+            System.out.println("Selected End Point: " + (endPoint != null ? endPoint.toString() : "null"));
 
-            Integer startId = startInput.isEmpty() ? null : Integer.parseInt(startInput);
-            Integer endId = endInput.isEmpty() ? null : Integer.parseInt(endInput);
-            if (startId == null || endId == null) {
-                System.out.println("Invalid input: startId or endId is null");
-                showAlert(Alert.AlertType.ERROR, "Invalid Input", "Please enter valid Start and End Point IDs.");
-                return;
-            }
-            System.out.println("Parsed IDs: startId=" + startId + ", endId=" + endId);
-
-            PointInteret startPoint = poiService.getById(startId);
-            PointInteret endPoint = poiService.getById(endId);
-            System.out.println("Start Point: " + (startPoint != null ? startPoint.getNom() + " (ID: " + startId + ")" : "null"));
-            System.out.println("End Point: " + (endPoint != null ? endPoint.getNom() + " (ID: " + endId + ")" : "null"));
             if (startPoint == null || endPoint == null) {
-                System.out.println("One or both Point IDs do not exist in the database");
-                showAlert(Alert.AlertType.ERROR, "Invalid Points", "One or both Point IDs do not exist in the database.");
+                System.out.println("Invalid selection: Start or End Point is not selected");
+                showAlert(Alert.AlertType.ERROR, "Invalid Selection", "Please select both Start and End Points.");
                 return;
             }
+
+            Integer startId = startPoint.getId();
+            Integer endId = endPoint.getId();
+            System.out.println("Extracted IDs: startId=" + startId + ", endId=" + endId);
 
             if (mapController == null) {
                 System.out.println("MapController is not initialized");
@@ -170,8 +245,8 @@ public class TrajetController {
 
             Trajet trajet = new Trajet();
             trajet.setDistance(distance);
-            trajet.setPointDepart(startId);
-            trajet.setPointArrivee(endId);
+            trajet.setPointDepart(startId);  // Use only the ID
+            trajet.setPointArrivee(endId);   // Use only the ID
             trajet.setTempsEstime(new Time(10 * 60 * 1000));
             System.out.println("Created Trajet: point_depart=" + startId + ", point_arrivee=" + endId + ", distance=" + distance);
 
@@ -187,7 +262,6 @@ public class TrajetController {
             loadRouteData();
             clearRouteFields();
 
-            // Refresh map to show new POIs and route
             if (mapController != null) {
                 mapController.refreshMap();
                 displayRouteOnMap(trajet);
@@ -198,10 +272,6 @@ public class TrajetController {
 
             System.out.println("Route added successfully");
             showAlert(Alert.AlertType.INFORMATION, "Success", "Route added successfully! Distance: " + String.format("%.2f", distance) + " km");
-        } catch (NumberFormatException e) {
-            System.out.println("NumberFormatException: " + e.getMessage());
-            showAlert(Alert.AlertType.ERROR, "Invalid Input", "Please enter valid numbers for point IDs.");
-            LOGGER.log(Level.WARNING, "Invalid input for point IDs", e);
         } catch (Exception e) {
             System.out.println("Unexpected error in addRoute: " + e.getMessage());
             e.printStackTrace();
@@ -221,28 +291,20 @@ public class TrajetController {
         }
         System.out.println("Selected Trajet ID: " + selected.getId());
         try {
-            String startInput = routeStartPointField.getText().trim();
-            String endInput = routeEndPointField.getText().trim();
-            System.out.println("Start ID input: '" + startInput + "', End ID input: '" + endInput + "'");
+            PointInteret startPoint = routeStartPointComboBox.getSelectionModel().getSelectedItem();
+            PointInteret endPoint = routeEndPointComboBox.getSelectionModel().getSelectedItem();
+            System.out.println("Selected Start Point: " + (startPoint != null ? startPoint.toString() : "null"));
+            System.out.println("Selected End Point: " + (endPoint != null ? endPoint.toString() : "null"));
 
-            Integer startId = startInput.isEmpty() ? null : Integer.parseInt(startInput);
-            Integer endId = endInput.isEmpty() ? null : Integer.parseInt(endInput);
-            if (startId == null || endId == null) {
-                System.out.println("Invalid input: startId or endId is null");
-                showAlert(Alert.AlertType.ERROR, "Invalid Input", "Please enter valid Start and End Point IDs.");
-                return;
-            }
-            System.out.println("Parsed IDs: startId=" + startId + ", endId=" + endId);
-
-            PointInteret startPoint = poiService.getById(startId);
-            PointInteret endPoint = poiService.getById(endId);
-            System.out.println("Start Point: " + (startPoint != null ? startPoint.getNom() + " (ID: " + startId + ")" : "null"));
-            System.out.println("End Point: " + (endPoint != null ? endPoint.getNom() + " (ID: " + endId + ")" : "null"));
             if (startPoint == null || endPoint == null) {
-                System.out.println("One or both Point IDs do not exist in the database");
-                showAlert(Alert.AlertType.ERROR, "Invalid Points", "One or both Point IDs do not exist in the database.");
+                System.out.println("Invalid selection: Start or End Point is not selected");
+                showAlert(Alert.AlertType.ERROR, "Invalid Selection", "Please select both Start and End Points.");
                 return;
             }
+
+            Integer startId = startPoint.getId();
+            Integer endId = endPoint.getId();
+            System.out.println("Extracted IDs: startId=" + startId + ", endId=" + endId);
 
             if (mapController == null) {
                 System.out.println("MapController is not initialized");
@@ -257,8 +319,8 @@ public class TrajetController {
             System.out.println("Calculated distance: " + distance + " km");
 
             selected.setDistance(distance);
-            selected.setPointDepart(startId);
-            selected.setPointArrivee(endId);
+            selected.setPointDepart(startId);  // Use only the ID
+            selected.setPointArrivee(endId);   // Use only the ID
             selected.setStartLatitude(null);
             selected.setStartLongitude(null);
             selected.setStartNom(null);
@@ -277,7 +339,6 @@ public class TrajetController {
             loadRouteData();
             clearRouteFields();
 
-            // Display updated route on map
             if (mapController != null) {
                 displayRouteOnMap(selected);
                 System.out.println("Displayed route after updating Trajet ID: " + selected.getId());
@@ -287,10 +348,6 @@ public class TrajetController {
 
             System.out.println("Route updated successfully");
             showAlert(Alert.AlertType.INFORMATION, "Success", "Route updated successfully! Distance: " + String.format("%.2f", distance) + " km");
-        } catch (NumberFormatException e) {
-            System.out.println("NumberFormatException: " + e.getMessage());
-            showAlert(Alert.AlertType.ERROR, "Invalid Input", "Please enter valid numbers for point IDs.");
-            LOGGER.log(Level.WARNING, "Invalid input for point IDs", e);
         } catch (Exception e) {
             System.out.println("Unexpected error in updateRoute: " + e.getMessage());
             e.printStackTrace();
@@ -314,7 +371,6 @@ public class TrajetController {
             trajetService.supprimer(selected.getId());
             routeList.remove(selected);
             clearRouteFields();
-            // Refresh map to clear routes and reload POIs
             if (mapController != null) {
                 mapController.refreshMap();
                 System.out.println("Map refreshed after deleting Trajet ID: " + selected.getId());
@@ -335,8 +391,10 @@ public class TrajetController {
     private void clearRouteFields() {
         System.out.println("clearRouteFields() method invoked");
         try {
-            routeStartPointField.clear();
-            routeEndPointField.clear();
+            routeStartPointComboBox.getEditor().clear(); // Clear the editor text
+            routeStartPointComboBox.getSelectionModel().clearSelection();
+            routeEndPointComboBox.getEditor().clear();   // Clear the editor text
+            routeEndPointComboBox.getSelectionModel().clearSelection();
             routeTable.getSelectionModel().clearSelection();
             System.out.println("Route fields cleared");
         } catch (Exception e) {
@@ -349,8 +407,40 @@ public class TrajetController {
 
     private void populateRouteFields(Trajet trajet) {
         System.out.println("Populating route fields for Trajet ID: " + trajet.getId());
-        routeStartPointField.setText(trajet.getPointDepart() != null ? String.valueOf(trajet.getPointDepart()) : "");
-        routeEndPointField.setText(trajet.getPointArrivee() != null ? String.valueOf(trajet.getPointArrivee()) : "");
+        // Find the corresponding PointInteret objects for the IDs
+        if (trajet.getPointDepart() != null) {
+            PointInteret startPoint = pointInteretList.stream()
+                    .filter(pi -> pi.getId() == trajet.getPointDepart())
+                    .findFirst()
+                    .orElse(null);
+            if (startPoint != null) {
+                routeStartPointComboBox.getSelectionModel().select(startPoint);
+                routeStartPointComboBox.getEditor().setText(startPoint.toString()); // Set editor text
+            } else {
+                routeStartPointComboBox.getSelectionModel().clearSelection();
+                routeStartPointComboBox.getEditor().clear();
+            }
+        } else {
+            routeStartPointComboBox.getSelectionModel().clearSelection();
+            routeStartPointComboBox.getEditor().clear();
+        }
+
+        if (trajet.getPointArrivee() != null) {
+            PointInteret endPoint = pointInteretList.stream()
+                    .filter(pi -> pi.getId() == trajet.getPointArrivee())
+                    .findFirst()
+                    .orElse(null);
+            if (endPoint != null) {
+                routeEndPointComboBox.getSelectionModel().select(endPoint);
+                routeEndPointComboBox.getEditor().setText(endPoint.toString()); // Set editor text
+            } else {
+                routeEndPointComboBox.getSelectionModel().clearSelection();
+                routeEndPointComboBox.getEditor().clear();
+            }
+        } else {
+            routeEndPointComboBox.getSelectionModel().clearSelection();
+            routeEndPointComboBox.getEditor().clear();
+        }
     }
 
     public void createTrajetFromRoute(PointInteret start, PointInteret end, double distance, Time estimatedTime) {
@@ -374,7 +464,6 @@ public class TrajetController {
                     ", nom=" + end.getNom() +
                     ", type=" + end.getType());
 
-            // Validate coordinates
             if (start.getLatitude() == 0.0 || start.getLongitude() == 0.0 ||
                     end.getLatitude() == 0.0 || end.getLongitude() == 0.0) {
                 System.out.println("Invalid coordinates: One or more coordinates are zero");
@@ -386,7 +475,6 @@ public class TrajetController {
             trajet.setDistance(distance);
             trajet.setTempsEstime(estimatedTime);
 
-            // Use PointInteret IDs if available, otherwise store coordinates
             if (start.getId() > 0) {
                 trajet.setPointDepart(start.getId());
             } else {
@@ -420,11 +508,25 @@ public class TrajetController {
 
             loadRouteData();
             Platform.runLater(() -> {
-                routeStartPointField.setText(trajet.getPointDepart() != null ? String.valueOf(trajet.getPointDepart()) : "");
-                routeEndPointField.setText(trajet.getPointArrivee() != null ? String.valueOf(trajet.getPointArrivee()) : "");
+                // Find and select the corresponding PointInteret objects in the ComboBoxes
+                PointInteret startPoint = pointInteretList.stream()
+                        .filter(pi -> pi.getId() == trajet.getPointDepart())
+                        .findFirst()
+                        .orElse(null);
+                PointInteret endPoint = pointInteretList.stream()
+                        .filter(pi -> pi.getId() == trajet.getPointArrivee())
+                        .findFirst()
+                        .orElse(null);
+                if (startPoint != null) {
+                    routeStartPointComboBox.getSelectionModel().select(startPoint);
+                    routeStartPointComboBox.getEditor().setText(startPoint.toString());
+                }
+                if (endPoint != null) {
+                    routeEndPointComboBox.getSelectionModel().select(endPoint);
+                    routeEndPointComboBox.getEditor().setText(endPoint.toString());
+                }
             });
 
-            // Refresh map to show new route and all POIs
             if (mapController != null) {
                 mapController.refreshMap();
                 displayRouteOnMap(trajet);
@@ -451,7 +553,6 @@ public class TrajetController {
             trajetService.removeAll();
             routeList.clear();
             clearRouteFields();
-            // Refresh map to clear routes and reload POIs
             if (mapController != null) {
                 mapController.refreshMap();
                 System.out.println("Map refreshed after removing all Trajets");
@@ -492,12 +593,10 @@ public class TrajetController {
                 return;
             }
 
-            // Clear the map to remove any existing routes and markers
             mapController.clearMap();
 
             Double startLat = null, startLng = null, endLat = null, endLng = null;
 
-            // Try to get coordinates from PointInteret if point_depart/point_arrivee exist
             if (trajet.getPointDepart() != null) {
                 PointInteret startPoint = poiService.getById(trajet.getPointDepart());
                 if (startPoint != null) {
@@ -521,7 +620,6 @@ public class TrajetController {
                 }
             }
 
-            // Fall back to start_latitude/start_longitude and end_latitude/end_longitude if available
             if (startLat == null || startLng == null) {
                 startLat = trajet.getStartLatitude();
                 startLng = trajet.getStartLongitude();
@@ -533,7 +631,6 @@ public class TrajetController {
                 System.out.println("Using stored coordinates for end: lat=" + endLat + ", lng=" + endLng);
             }
 
-            // Validate coordinates before calling displayRoute
             if (startLat != null && startLng != null && endLat != null && endLng != null) {
                 System.out.println("Calling mapController.displayRoute: startLat=" + startLat +
                         ", startLng=" + startLng + ", endLat=" + endLat +
