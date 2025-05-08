@@ -11,6 +11,7 @@ import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.util.Callback;
 import java.sql.Time;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -26,8 +27,8 @@ public class TrajetController {
     @FXML private TableColumn<Trajet, Integer> routeEndPointColumn;
     @FXML private TableColumn<Trajet, Time> routeTimeColumn;
 
-    @FXML private ComboBox<PointInteret> routeStartPointComboBox; // Editable ComboBox
-    @FXML private ComboBox<PointInteret> routeEndPointComboBox;   // Editable ComboBox
+    @FXML private ComboBox<PointInteret> routeStartPointComboBox;
+    @FXML private ComboBox<PointInteret> routeEndPointComboBox;
     @FXML private Button addRouteButton;
     @FXML private Button updateRouteButton;
     @FXML private Button deleteRouteButton;
@@ -38,22 +39,14 @@ public class TrajetController {
     private final TrajetService trajetService = new TrajetService();
     private final PointInteretService poiService = new PointInteretService();
     private final ObservableList<Trajet> routeList = FXCollections.observableArrayList();
-    private final ObservableList<PointInteret> pointInteretList = FXCollections.observableArrayList(); // For ComboBoxes
-    private FilteredList<PointInteret> filteredStartPoints; // For filtering
-    private FilteredList<PointInteret> filteredEndPoints;   // For filtering
+    private final ObservableList<PointInteret> pointInteretList = FXCollections.observableArrayList();
+    private FilteredList<PointInteret> filteredStartPoints;
+    private FilteredList<PointInteret> filteredEndPoints;
     private MapController mapController;
 
     @FXML
     public void initialize() {
         System.out.println("TrajetController initialize called");
-        System.out.println("routeTable: " + (routeTable != null ? "not null" : "null"));
-        System.out.println("routeStartPointComboBox: " + (routeStartPointComboBox != null ? "not null" : "null"));
-        System.out.println("routeEndPointComboBox: " + (routeEndPointComboBox != null ? "not null" : "null"));
-        System.out.println("addRouteButton: " + (addRouteButton != null ? "not null" : "null"));
-        System.out.println("updateRouteButton: " + (updateRouteButton != null ? "not null" : "null"));
-        System.out.println("deleteRouteButton: " + (deleteRouteButton != null ? "not null" : "null"));
-        System.out.println("clearRouteButton: " + (clearRouteButton != null ? "not null" : "null"));
-        System.out.println("removeAllButton: " + (removeAllButton != null ? "not null" : "null"));
 
         // Initialize TableView columns
         routeIdColumn.setCellValueFactory(new PropertyValueFactory<>("id"));
@@ -64,74 +57,9 @@ public class TrajetController {
         routeTable.setItems(routeList);
         loadRouteData();
 
-        // Populate and configure ComboBoxes with filtering
+        // Populate and configure ComboBoxes with improved setup
         loadPointInteretData();
-        routeStartPointComboBox.setEditable(true); // Enable editing for filtering
-        routeEndPointComboBox.setEditable(true);   // Enable editing for filtering
-
-        // Set the initial number of visible rows for the dropdown
-        routeStartPointComboBox.setVisibleRowCount(10); // Set to a reasonable maximum
-        routeEndPointComboBox.setVisibleRowCount(10);   // Set to a reasonable maximum
-
-        // Set up filtered lists
-        filteredStartPoints = new FilteredList<>(pointInteretList, p -> true);
-        filteredEndPoints = new FilteredList<>(pointInteretList, p -> true);
-
-        // Bind filtered lists to ComboBoxes
-        routeStartPointComboBox.setItems(filteredStartPoints);
-        routeEndPointComboBox.setItems(filteredEndPoints);
-
-        // Add listener to filter based on typed text for Start Point
-        routeStartPointComboBox.getEditor().textProperty().addListener((obs, oldValue, newValue) -> {
-            filteredStartPoints.setPredicate(point -> {
-                if (newValue == null || newValue.isEmpty()) {
-                    return true; // Show all if no text
-                }
-                String lowerCaseFilter = newValue.toLowerCase();
-                return point.getNom().toLowerCase().contains(lowerCaseFilter);
-            });
-            // Ensure the dropdown is visible when filtered
-            if (!filteredStartPoints.isEmpty()) {
-                routeStartPointComboBox.show();
-            } else {
-                routeStartPointComboBox.hide();
-            }
-            // When text is cleared, force the dropdown to resize by hiding and re-showing
-            if (newValue == null || newValue.isEmpty()) {
-                routeStartPointComboBox.hide();
-                Platform.runLater(() -> {
-                    if (routeStartPointComboBox.getEditor().isFocused()) {
-                        routeStartPointComboBox.show();
-                    }
-                });
-            }
-        });
-
-        // Add listener to filter based on typed text for End Point
-        routeEndPointComboBox.getEditor().textProperty().addListener((obs, oldValue, newValue) -> {
-            filteredEndPoints.setPredicate(point -> {
-                if (newValue == null || newValue.isEmpty()) {
-                    return true; // Show all if no text
-                }
-                String lowerCaseFilter = newValue.toLowerCase();
-                return point.getNom().toLowerCase().contains(lowerCaseFilter);
-            });
-            // Ensure the dropdown is visible when filtered
-            if (!filteredEndPoints.isEmpty()) {
-                routeEndPointComboBox.show();
-            } else {
-                routeEndPointComboBox.hide();
-            }
-            // When text is cleared, force the dropdown to resize by hiding and re-showing
-            if (newValue == null || newValue.isEmpty()) {
-                routeEndPointComboBox.hide();
-                Platform.runLater(() -> {
-                    if (routeEndPointComboBox.getEditor().isFocused()) {
-                        routeEndPointComboBox.show();
-                    }
-                });
-            }
-        });
+        setupComboBoxes();  // Use the new method instead of the old code
 
         // Handle TableView selection
         routeTable.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
@@ -159,34 +87,188 @@ public class TrajetController {
         // Set button actions
         if (addRouteButton != null) {
             addRouteButton.setOnAction(event -> addRoute());
-            System.out.println("Manually set onAction for addRouteButton");
-        } else {
-            System.out.println("addRouteButton is null in initialize()");
         }
         if (updateRouteButton != null) {
             updateRouteButton.setOnAction(event -> updateRoute());
-            System.out.println("Manually set onAction for updateRouteButton");
-        } else {
-            System.out.println("updateRouteButton is null in initialize()");
         }
         if (deleteRouteButton != null) {
             deleteRouteButton.setOnAction(event -> deleteRoute());
-            System.out.println("Manually set onAction for deleteRouteButton");
-        } else {
-            System.out.println("deleteRouteButton is null in initialize()");
         }
         if (clearRouteButton != null) {
             clearRouteButton.setOnAction(event -> clearRouteFields());
-            System.out.println("Manually set onAction for clearRouteButton");
-        } else {
-            System.out.println("clearRouteButton is null in initialize()");
         }
         if (removeAllButton != null) {
             removeAllButton.setOnAction(event -> removeAll());
-            System.out.println("Manually set onAction for removeAllButton");
-        } else {
-            System.out.println("removeAllButton is null in initialize()");
         }
+    }
+
+    // Setup ComboBoxes with proper cell factories and event handling
+    private void setupComboBoxes() {
+        // Create filtered lists with a stable predicate (initially show all)
+        filteredStartPoints = new FilteredList<>(pointInteretList, p -> true);
+        filteredEndPoints = new FilteredList<>(pointInteretList, p -> true);
+
+        routeStartPointComboBox.setItems(filteredStartPoints);
+        routeEndPointComboBox.setItems(filteredEndPoints);
+
+        // Make comboboxes editable
+        routeStartPointComboBox.setEditable(true);
+        routeEndPointComboBox.setEditable(true);
+
+        // Create a StringConverter for both ComboBoxes
+        javafx.util.StringConverter<PointInteret> converter = new javafx.util.StringConverter<PointInteret>() {
+            @Override
+            public String toString(PointInteret point) {
+                return point != null ? "ID: " + point.getId() + " - Name: " + point.getNom() : "";
+            }
+
+            @Override
+            public PointInteret fromString(String string) {
+                if (string == null || string.isEmpty()) return null;
+                return pointInteretList.stream()
+                        .filter(pi -> ("ID: " + pi.getId() + " - Name: " + pi.getNom()).equals(string))
+                        .findFirst()
+                        .orElse(null);
+            }
+        };
+
+        routeStartPointComboBox.setConverter(converter);
+        routeEndPointComboBox.setConverter(converter);
+
+        // Create custom cell factories to display PointInteret objects properly
+        Callback<ListView<PointInteret>, ListCell<PointInteret>> cellFactory = p -> new ListCell<PointInteret>() {
+            @Override
+            protected void updateItem(PointInteret item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText("ID: " + item.getId() + " - Name: " + item.getNom());
+                }
+            }
+
+            // Add safe mouse handling to prevent exceptions during direct clicks
+            {
+                setOnMouseClicked(event -> {
+                    if (getItem() != null) {
+                        // Get the parent ComboBox
+                        @SuppressWarnings("unchecked")
+                        ComboBox<PointInteret> comboBox = (ComboBox<PointInteret>) getListView().getParent().getParent().getParent();
+
+                        // Safely set the value and update UI
+                        Platform.runLater(() -> {
+                            PointInteret selectedItem = getItem();
+                            comboBox.setValue(selectedItem);
+                            comboBox.getEditor().setText("ID: " + selectedItem.getId() + " - Name: " + selectedItem.getNom());
+                            comboBox.hide();
+                        });
+
+                        event.consume();
+                    }
+                });
+            }
+        };
+
+        routeStartPointComboBox.setCellFactory(cellFactory);
+        routeEndPointComboBox.setCellFactory(cellFactory);
+
+        // Set up safe filtering for start point ComboBox
+        routeStartPointComboBox.getEditor().focusedProperty().addListener((obs, oldVal, newVal) -> {
+            // When gaining focus, ensure all items are visible
+            if (newVal) {
+                Platform.runLater(() -> {
+                    filteredStartPoints.setPredicate(p -> true);
+                });
+            }
+        });
+
+        routeStartPointComboBox.getEditor().textProperty().addListener((obs, oldVal, newVal) -> {
+            // Avoid filtering during selection events
+            Platform.runLater(() -> {
+                if (!routeStartPointComboBox.isShowing() && newVal != null) {
+                    filteredStartPoints.setPredicate(point -> {
+                        if (newVal.isEmpty()) return true;
+                        String lowerCaseFilter = newVal.toLowerCase();
+                        return point.getNom().toLowerCase().contains(lowerCaseFilter) ||
+                                String.valueOf(point.getId()).contains(lowerCaseFilter);
+                    });
+
+                    if (!filteredStartPoints.isEmpty()) {
+                        routeStartPointComboBox.show();
+                    }
+                }
+            });
+        });
+
+        // Custom showing/hiding behavior to prevent empty list exceptions
+        routeStartPointComboBox.setOnShowing(event -> {
+            Platform.runLater(() -> {
+                // Ensure we have items to show
+                if (filteredStartPoints.isEmpty()) {
+                    filteredStartPoints.setPredicate(p -> true);
+                }
+            });
+        });
+
+        // Safe selection handling
+        routeStartPointComboBox.setOnAction(event -> {
+            Platform.runLater(() -> {
+                PointInteret selected = routeStartPointComboBox.getSelectionModel().getSelectedItem();
+                if (selected != null) {
+                    // Update editor text without triggering the filter
+                    String displayText = "ID: " + selected.getId() + " - Name: " + selected.getNom();
+                    if (!routeStartPointComboBox.getEditor().getText().equals(displayText)) {
+                        routeStartPointComboBox.getEditor().setText(displayText);
+                    }
+                }
+            });
+        });
+
+        // Repeat the same setup for end point ComboBox
+        routeEndPointComboBox.getEditor().focusedProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal) {
+                Platform.runLater(() -> {
+                    filteredEndPoints.setPredicate(p -> true);
+                });
+            }
+        });
+
+        routeEndPointComboBox.getEditor().textProperty().addListener((obs, oldVal, newVal) -> {
+            Platform.runLater(() -> {
+                if (!routeEndPointComboBox.isShowing() && newVal != null) {
+                    filteredEndPoints.setPredicate(point -> {
+                        if (newVal.isEmpty()) return true;
+                        String lowerCaseFilter = newVal.toLowerCase();
+                        return point.getNom().toLowerCase().contains(lowerCaseFilter) ||
+                                String.valueOf(point.getId()).contains(lowerCaseFilter);
+                    });
+
+                    if (!filteredEndPoints.isEmpty()) {
+                        routeEndPointComboBox.show();
+                    }
+                }
+            });
+        });
+
+        routeEndPointComboBox.setOnShowing(event -> {
+            Platform.runLater(() -> {
+                if (filteredEndPoints.isEmpty()) {
+                    filteredEndPoints.setPredicate(p -> true);
+                }
+            });
+        });
+
+        routeEndPointComboBox.setOnAction(event -> {
+            Platform.runLater(() -> {
+                PointInteret selected = routeEndPointComboBox.getSelectionModel().getSelectedItem();
+                if (selected != null) {
+                    String displayText = "ID: " + selected.getId() + " - Name: " + selected.getNom();
+                    if (!routeEndPointComboBox.getEditor().getText().equals(displayText)) {
+                        routeEndPointComboBox.getEditor().setText(displayText);
+                    }
+                }
+            });
+        });
     }
 
     public void setMapController(MapController controller) {
@@ -216,8 +298,8 @@ public class TrajetController {
     private void addRoute() {
         System.out.println("addRoute() method invoked");
         try {
-            PointInteret startPoint = routeStartPointComboBox.getSelectionModel().getSelectedItem();
-            PointInteret endPoint = routeEndPointComboBox.getSelectionModel().getSelectedItem();
+            PointInteret startPoint = routeStartPointComboBox.getValue();
+            PointInteret endPoint = routeEndPointComboBox.getValue();
             System.out.println("Selected Start Point: " + (startPoint != null ? startPoint.toString() : "null"));
             System.out.println("Selected End Point: " + (endPoint != null ? endPoint.toString() : "null"));
 
@@ -245,8 +327,8 @@ public class TrajetController {
 
             Trajet trajet = new Trajet();
             trajet.setDistance(distance);
-            trajet.setPointDepart(startId);  // Use only the ID
-            trajet.setPointArrivee(endId);   // Use only the ID
+            trajet.setPointDepart(startId);
+            trajet.setPointArrivee(endId);
             trajet.setTempsEstime(new Time(10 * 60 * 1000));
             System.out.println("Created Trajet: point_depart=" + startId + ", point_arrivee=" + endId + ", distance=" + distance);
 
@@ -291,8 +373,8 @@ public class TrajetController {
         }
         System.out.println("Selected Trajet ID: " + selected.getId());
         try {
-            PointInteret startPoint = routeStartPointComboBox.getSelectionModel().getSelectedItem();
-            PointInteret endPoint = routeEndPointComboBox.getSelectionModel().getSelectedItem();
+            PointInteret startPoint = routeStartPointComboBox.getValue();
+            PointInteret endPoint = routeEndPointComboBox.getValue();
             System.out.println("Selected Start Point: " + (startPoint != null ? startPoint.toString() : "null"));
             System.out.println("Selected End Point: " + (endPoint != null ? endPoint.toString() : "null"));
 
@@ -319,8 +401,8 @@ public class TrajetController {
             System.out.println("Calculated distance: " + distance + " km");
 
             selected.setDistance(distance);
-            selected.setPointDepart(startId);  // Use only the ID
-            selected.setPointArrivee(endId);   // Use only the ID
+            selected.setPointDepart(startId);
+            selected.setPointArrivee(endId);
             selected.setStartLatitude(null);
             selected.setStartLongitude(null);
             selected.setStartNom(null);
@@ -387,15 +469,25 @@ public class TrajetController {
         }
     }
 
+    /**
+     * Safely clears the route fields
+     */
     @FXML
     private void clearRouteFields() {
         System.out.println("clearRouteFields() method invoked");
         try {
-            routeStartPointComboBox.getEditor().clear(); // Clear the editor text
-            routeStartPointComboBox.getSelectionModel().clearSelection();
-            routeEndPointComboBox.getEditor().clear();   // Clear the editor text
-            routeEndPointComboBox.getSelectionModel().clearSelection();
-            routeTable.getSelectionModel().clearSelection();
+            Platform.runLater(() -> {
+                // First reset the filtering so we have all items
+                filteredStartPoints.setPredicate(p -> true);
+                filteredEndPoints.setPredicate(p -> true);
+
+                // Then clear values safely
+                routeStartPointComboBox.setValue(null);
+                routeEndPointComboBox.setValue(null);
+                routeStartPointComboBox.getEditor().setText("");
+                routeEndPointComboBox.getEditor().setText("");
+                routeTable.getSelectionModel().clearSelection();
+            });
             System.out.println("Route fields cleared");
         } catch (Exception e) {
             System.out.println("Unexpected error in clearRouteFields: " + e.getMessage());
@@ -405,42 +497,59 @@ public class TrajetController {
         }
     }
 
+    /**
+     * Safe method to populate route fields that avoids IndexOutOfBoundsException
+     */
     private void populateRouteFields(Trajet trajet) {
         System.out.println("Populating route fields for Trajet ID: " + trajet.getId());
-        // Find the corresponding PointInteret objects for the IDs
-        if (trajet.getPointDepart() != null) {
-            PointInteret startPoint = pointInteretList.stream()
-                    .filter(pi -> pi.getId() == trajet.getPointDepart())
-                    .findFirst()
-                    .orElse(null);
-            if (startPoint != null) {
-                routeStartPointComboBox.getSelectionModel().select(startPoint);
-                routeStartPointComboBox.getEditor().setText(startPoint.toString()); // Set editor text
-            } else {
-                routeStartPointComboBox.getSelectionModel().clearSelection();
-                routeStartPointComboBox.getEditor().clear();
-            }
-        } else {
-            routeStartPointComboBox.getSelectionModel().clearSelection();
-            routeStartPointComboBox.getEditor().clear();
-        }
 
-        if (trajet.getPointArrivee() != null) {
-            PointInteret endPoint = pointInteretList.stream()
-                    .filter(pi -> pi.getId() == trajet.getPointArrivee())
-                    .findFirst()
-                    .orElse(null);
-            if (endPoint != null) {
-                routeEndPointComboBox.getSelectionModel().select(endPoint);
-                routeEndPointComboBox.getEditor().setText(endPoint.toString()); // Set editor text
+        Platform.runLater(() -> {
+            // First, reset filtering to show all items
+            filteredStartPoints.setPredicate(p -> true);
+            filteredEndPoints.setPredicate(p -> true);
+
+            // Then populate start point
+            if (trajet.getPointDepart() != null) {
+                final Integer startId = trajet.getPointDepart();
+                PointInteret startPoint = pointInteretList.stream()
+                        .filter(pi -> pi.getId() == startId)
+                        .findFirst()
+                        .orElse(null);
+
+                if (startPoint != null) {
+                    // Set value first
+                    routeStartPointComboBox.setValue(startPoint);
+                    // Then update the editor text
+                    routeStartPointComboBox.getEditor().setText("ID: " + startPoint.getId() + " - Name: " + startPoint.getNom());
+                } else {
+                    routeStartPointComboBox.setValue(null);
+                    routeStartPointComboBox.getEditor().setText("");
+                }
             } else {
-                routeEndPointComboBox.getSelectionModel().clearSelection();
-                routeEndPointComboBox.getEditor().clear();
+                routeStartPointComboBox.setValue(null);
+                routeStartPointComboBox.getEditor().setText("");
             }
-        } else {
-            routeEndPointComboBox.getSelectionModel().clearSelection();
-            routeEndPointComboBox.getEditor().clear();
-        }
+
+            // Populate end point with the same safe approach
+            if (trajet.getPointArrivee() != null) {
+                final Integer endId = trajet.getPointArrivee();
+                PointInteret endPoint = pointInteretList.stream()
+                        .filter(pi -> pi.getId() == endId)
+                        .findFirst()
+                        .orElse(null);
+
+                if (endPoint != null) {
+                    routeEndPointComboBox.setValue(endPoint);
+                    routeEndPointComboBox.getEditor().setText("ID: " + endPoint.getId() + " - Name: " + endPoint.getNom());
+                } else {
+                    routeEndPointComboBox.setValue(null);
+                    routeEndPointComboBox.getEditor().setText("");
+                }
+            } else {
+                routeEndPointComboBox.setValue(null);
+                routeEndPointComboBox.getEditor().setText("");
+            }
+        });
     }
 
     public void createTrajetFromRoute(PointInteret start, PointInteret end, double distance, Time estimatedTime) {
@@ -452,17 +561,6 @@ public class TrajetController {
                 showAlert(Alert.AlertType.ERROR, "Error", "Start or end point is null.");
                 return;
             }
-
-            System.out.println("Start PointInteret: id=" + start.getId() +
-                    ", latitude=" + start.getLatitude() +
-                    ", longitude=" + start.getLongitude() +
-                    ", nom=" + start.getNom() +
-                    ", type=" + start.getType());
-            System.out.println("End PointInteret: id=" + end.getId() +
-                    ", latitude=" + end.getLatitude() +
-                    ", longitude=" + end.getLongitude() +
-                    ", nom=" + end.getNom() +
-                    ", type=" + end.getType());
 
             if (start.getLatitude() == 0.0 || start.getLongitude() == 0.0 ||
                     end.getLatitude() == 0.0 || end.getLongitude() == 0.0) {
@@ -492,13 +590,6 @@ public class TrajetController {
                 trajet.setEndType(end.getType());
             }
 
-            System.out.println("Trajet created: point_depart=" + trajet.getPointDepart() +
-                    ", point_arrivee=" + trajet.getPointArrivee() +
-                    ", start_latitude=" + trajet.getStartLatitude() +
-                    ", start_longitude=" + trajet.getStartLongitude() +
-                    ", end_latitude=" + trajet.getEndLatitude() +
-                    ", end_longitude=" + trajet.getEndLongitude());
-
             int addedId = trajetService.ajouter(trajet);
             if (addedId == -1) {
                 System.out.println("Failed to add Trajet from map selection");
@@ -508,23 +599,10 @@ public class TrajetController {
 
             loadRouteData();
             Platform.runLater(() -> {
-                // Find and select the corresponding PointInteret objects in the ComboBoxes
-                PointInteret startPoint = pointInteretList.stream()
-                        .filter(pi -> pi.getId() == trajet.getPointDepart())
-                        .findFirst()
-                        .orElse(null);
-                PointInteret endPoint = pointInteretList.stream()
-                        .filter(pi -> pi.getId() == trajet.getPointArrivee())
-                        .findFirst()
-                        .orElse(null);
-                if (startPoint != null) {
-                    routeStartPointComboBox.getSelectionModel().select(startPoint);
-                    routeStartPointComboBox.getEditor().setText(startPoint.toString());
-                }
-                if (endPoint != null) {
-                    routeEndPointComboBox.getSelectionModel().select(endPoint);
-                    routeEndPointComboBox.getEditor().setText(endPoint.toString());
-                }
+                routeStartPointComboBox.setValue(start);
+                routeEndPointComboBox.setValue(end);
+                routeStartPointComboBox.getEditor().setText("ID: " + start.getId() + " - Name: " + start.getNom());
+                routeEndPointComboBox.getEditor().setText("ID: " + end.getId() + " - Name: " + end.getNom());
             });
 
             if (mapController != null) {
@@ -580,12 +658,6 @@ public class TrajetController {
 
     private void displayRouteOnMap(Trajet trajet) {
         System.out.println("displayRouteOnMap called for Trajet ID: " + trajet.getId());
-        System.out.println("Trajet details: point_depart=" + trajet.getPointDepart() +
-                ", point_arrivee=" + trajet.getPointArrivee() +
-                ", start_latitude=" + trajet.getStartLatitude() +
-                ", start_longitude=" + trajet.getStartLongitude() +
-                ", end_latitude=" + trajet.getEndLatitude() +
-                ", end_longitude=" + trajet.getEndLongitude());
         try {
             if (mapController == null) {
                 System.out.println("MapController is null");
@@ -602,10 +674,6 @@ public class TrajetController {
                 if (startPoint != null) {
                     startLat = startPoint.getLatitude();
                     startLng = startPoint.getLongitude();
-                    System.out.println("Using PointInteret for start: ID=" + trajet.getPointDepart() +
-                            ", lat=" + startLat + ", lng=" + startLng);
-                } else {
-                    System.out.println("PointInteret not found for point_depart ID: " + trajet.getPointDepart());
                 }
             }
             if (trajet.getPointArrivee() != null) {
@@ -613,40 +681,29 @@ public class TrajetController {
                 if (endPoint != null) {
                     endLat = endPoint.getLatitude();
                     endLng = endPoint.getLongitude();
-                    System.out.println("Using PointInteret for end: ID=" + trajet.getPointArrivee() +
-                            ", lat=" + endLat + ", lng=" + endLng);
-                } else {
-                    System.out.println("PointInteret not found for point_arrivee ID: " + trajet.getPointArrivee());
                 }
             }
 
             if (startLat == null || startLng == null) {
                 startLat = trajet.getStartLatitude();
                 startLng = trajet.getStartLongitude();
-                System.out.println("Using stored coordinates for start: lat=" + startLat + ", lng=" + startLng);
             }
             if (endLat == null || endLng == null) {
                 endLat = trajet.getEndLatitude();
                 endLng = trajet.getEndLongitude();
-                System.out.println("Using stored coordinates for end: lat=" + endLat + ", lng=" + endLng);
             }
 
             if (startLat != null && startLng != null && endLat != null && endLng != null) {
-                System.out.println("Calling mapController.displayRoute: startLat=" + startLat +
-                        ", startLng=" + startLng + ", endLat=" + endLat +
-                        ", endLng=" + endLng + ", distance=" + trajet.getDistance());
                 mapController.displayRoute(startLat, startLng, endLat, endLng, trajet.getDistance());
                 System.out.println("Displayed route on map for Trajet ID: " + trajet.getId());
             } else {
                 System.out.println("Cannot display route: Missing coordinates for Trajet ID: " + trajet.getId());
-                showAlert(Alert.AlertType.ERROR, "Error",
-                        "Cannot display route: Missing start or end coordinates.");
+                showAlert(Alert.AlertType.ERROR, "Error", "Cannot display route: Missing start or end coordinates.");
             }
         } catch (Exception e) {
             System.out.println("Error displaying route: " + e.getMessage());
             e.printStackTrace();
-            showAlert(Alert.AlertType.ERROR, "Error",
-                    "An error occurred while displaying the route: " + e.getMessage());
+            showAlert(Alert.AlertType.ERROR, "Error", "An error occurred while displaying the route: " + e.getMessage());
             LOGGER.log(Level.SEVERE, "Error displaying route on map", e);
         }
     }
