@@ -1,6 +1,7 @@
 package esprit.tn.guiproject.controllers;
 
 import esprit.tn.guiproject.models.PointInteret;
+import esprit.tn.guiproject.models.Trajet;
 import esprit.tn.guiproject.services.PointInteretService;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -232,6 +233,19 @@ public class MapController {
         }
     }
 
+    public void refreshMap() {
+        System.out.println("refreshMap called.");
+        try {
+            // Clear existing markers and routes
+            clearMap();
+            // Reload all PointInteret markers
+            loadExistingPOIs();
+            System.out.println("Map refreshed with POIs only.");
+        } catch (Exception e) {
+            LOGGER.severe("Error refreshing map: " + e.getMessage());
+        }
+    }
+
     public class MapBridge {
         private final MapController controller;
         private final AtomicInteger tempIdCounter = new AtomicInteger(-1);
@@ -246,7 +260,7 @@ public class MapController {
                     ", id=" + id + ", pointType=" + pointType +
                     ", isSelectingRoute=" + isSelectingRoute +
                     ", poiController=" + (controller.poiController != null));
-            
+
             // Log weather label status at click time
             System.out.println("Weather labels status at click - Temperature: " + (controller.temperatureLabel != null ? "available" : "null") +
                     ", Description: " + (controller.descriptionLabel != null ? "available" : "null") +
@@ -524,7 +538,7 @@ public class MapController {
                 HttpRequest request = HttpRequest.newBuilder()
                         .uri(URI.create(url))
                         .build();
-                
+
                 System.out.println("Sending HTTP request to weather API...");
                 HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
                 System.out.println("Received response with status: " + response.statusCode());

@@ -4,7 +4,6 @@ import esprit.tn.guiproject.models.PointInteret;
 import esprit.tn.guiproject.models.Trajet;
 import esprit.tn.guiproject.services.TrajetService;
 import esprit.tn.guiproject.services.PointInteretService;
-import esprit.tn.guiproject.controllers.MapController;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -35,9 +34,9 @@ public class TrajetController {
     @FXML private Button selectRouteButton;
     @FXML private Button removeAllButton;
 
-    private TrajetService trajetService = new TrajetService();
-    private PointInteretService poiService = new PointInteretService();
-    private ObservableList<Trajet> routeList = FXCollections.observableArrayList();
+    private final TrajetService trajetService = new TrajetService();
+    private final PointInteretService poiService = new PointInteretService();
+    private final ObservableList<Trajet> routeList = FXCollections.observableArrayList();
     private MapController mapController;
 
     @FXML
@@ -63,7 +62,13 @@ public class TrajetController {
         routeTable.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
             if (newSelection != null) {
                 populateRouteFields(newSelection);
-                displayRouteOnMap(newSelection);
+                // Display the selected route on the map
+                if (mapController != null) {
+                    displayRouteOnMap(newSelection);
+                    System.out.println("Displayed route for Trajet ID: " + newSelection.getId());
+                } else {
+                    System.out.println("MapController is null, cannot display route.");
+                }
             }
         });
 
@@ -111,6 +116,10 @@ public class TrajetController {
     public void setMapController(MapController controller) {
         this.mapController = controller;
         System.out.println("MapController set in TrajetController: " + (controller != null ? "not null" : "null"));
+    }
+
+    public Trajet getSelectedTrajet() {
+        return routeTable.getSelectionModel().getSelectedItem();
     }
 
     private void loadRouteData() {
@@ -178,11 +187,14 @@ public class TrajetController {
             loadRouteData();
             clearRouteFields();
 
-            mapController.displayRoute(
-                    startPoint.getLatitude(), startPoint.getLongitude(),
-                    endPoint.getLatitude(), endPoint.getLongitude(),
-                    distance
-            );
+            // Refresh map to show new POIs and route
+            if (mapController != null) {
+                mapController.refreshMap();
+                displayRouteOnMap(trajet);
+                System.out.println("Map refreshed and route displayed after adding Trajet ID: " + addedId);
+            } else {
+                System.out.println("MapController is null, cannot refresh map.");
+            }
 
             System.out.println("Route added successfully");
             showAlert(Alert.AlertType.INFORMATION, "Success", "Route added successfully! Distance: " + String.format("%.2f", distance) + " km");
@@ -265,11 +277,13 @@ public class TrajetController {
             loadRouteData();
             clearRouteFields();
 
-            mapController.displayRoute(
-                    startPoint.getLatitude(), startPoint.getLongitude(),
-                    endPoint.getLatitude(), endPoint.getLongitude(),
-                    distance
-            );
+            // Display updated route on map
+            if (mapController != null) {
+                displayRouteOnMap(selected);
+                System.out.println("Displayed route after updating Trajet ID: " + selected.getId());
+            } else {
+                System.out.println("MapController is null, cannot display route.");
+            }
 
             System.out.println("Route updated successfully");
             showAlert(Alert.AlertType.INFORMATION, "Success", "Route updated successfully! Distance: " + String.format("%.2f", distance) + " km");
@@ -300,6 +314,13 @@ public class TrajetController {
             trajetService.supprimer(selected.getId());
             routeList.remove(selected);
             clearRouteFields();
+            // Refresh map to clear routes and reload POIs
+            if (mapController != null) {
+                mapController.refreshMap();
+                System.out.println("Map refreshed after deleting Trajet ID: " + selected.getId());
+            } else {
+                System.out.println("MapController is null, cannot refresh map.");
+            }
             System.out.println("Route deleted successfully");
             showAlert(Alert.AlertType.INFORMATION, "Success", "Route deleted successfully!");
         } catch (Exception e) {
@@ -403,12 +424,14 @@ public class TrajetController {
                 routeEndPointField.setText(trajet.getPointArrivee() != null ? String.valueOf(trajet.getPointArrivee()) : "");
             });
 
-            // Immediately display the route
-            mapController.displayRoute(
-                    start.getLatitude(), start.getLongitude(),
-                    end.getLatitude(), end.getLongitude(),
-                    distance
-            );
+            // Refresh map to show new route and all POIs
+            if (mapController != null) {
+                mapController.refreshMap();
+                displayRouteOnMap(trajet);
+                System.out.println("Map refreshed and route displayed after creating Trajet ID: " + addedId);
+            } else {
+                System.out.println("MapController is null, cannot refresh map.");
+            }
 
             System.out.println("Route added from map selection with ID: " + addedId);
             showAlert(Alert.AlertType.INFORMATION, "Success",
@@ -428,6 +451,13 @@ public class TrajetController {
             trajetService.removeAll();
             routeList.clear();
             clearRouteFields();
+            // Refresh map to clear routes and reload POIs
+            if (mapController != null) {
+                mapController.refreshMap();
+                System.out.println("Map refreshed after removing all Trajets");
+            } else {
+                System.out.println("MapController is null, cannot refresh map.");
+            }
             System.out.println("All routes removed successfully");
             showAlert(Alert.AlertType.INFORMATION, "Success", "All routes removed successfully!");
         } catch (Exception e) {

@@ -31,9 +31,8 @@ public class PoiController {
 
     private PointInteretService poiService = new PointInteretService();
     private ObservableList<PointInteret> poiList = FXCollections.observableArrayList();
-    private MapController mapController; // Add reference to MapController
+    private MapController mapController;
 
-    // Method to set MapController reference
     public void setMapController(MapController mapController) {
         this.mapController = mapController;
         System.out.println("MapController set in PoiController to: " + (mapController != null ? "not null" : "null"));
@@ -54,12 +53,13 @@ public class PoiController {
         poiTable.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
             if (newSelection != null) {
                 populatePoiFields(newSelection);
-                // Center map on selected POI
+                // Refresh map to show all POIs and center on selected POI
                 if (mapController != null) {
+                    mapController.refreshMap();
                     mapController.centerMap(newSelection.getLatitude(), newSelection.getLongitude());
-                    System.out.println("Centered map on POI: lat=" + newSelection.getLatitude() + ", lng=" + newSelection.getLongitude());
+                    System.out.println("Map refreshed and centered on POI: lat=" + newSelection.getLatitude() + ", lng=" + newSelection.getLongitude());
                 } else {
-                    System.out.println("MapController is null, cannot center map.");
+                    System.out.println("MapController is null, cannot refresh or center map.");
                 }
             }
         });
@@ -98,6 +98,13 @@ public class PoiController {
                 poiList.add(poi);
                 clearPoiFields();
                 showAlert(Alert.AlertType.INFORMATION, "Success", "Point of Interest added successfully!");
+                // Refresh map to show new POI
+                if (mapController != null) {
+                    mapController.refreshMap();
+                    System.out.println("Map refreshed after adding POI ID: " + id);
+                } else {
+                    System.out.println("MapController is null, cannot refresh map.");
+                }
             } else {
                 showAlert(Alert.AlertType.ERROR, "Error", "Failed to add Point of Interest.");
             }
@@ -125,6 +132,13 @@ public class PoiController {
             loadPoiData();
             clearPoiFields();
             showAlert(Alert.AlertType.INFORMATION, "Success", "Point of Interest updated successfully!");
+            // Refresh map to reflect updated POI
+            if (mapController != null) {
+                mapController.refreshMap();
+                System.out.println("Map refreshed after updating POI ID: " + selected.getId());
+            } else {
+                System.out.println("MapController is null, cannot refresh map.");
+            }
         } catch (NumberFormatException e) {
             showAlert(Alert.AlertType.ERROR, "Invalid Input", "Please enter valid numbers for latitude and longitude.");
         } catch (Exception e) {
@@ -145,6 +159,13 @@ public class PoiController {
             poiList.remove(selected);
             clearPoiFields();
             showAlert(Alert.AlertType.INFORMATION, "Success", "Point of Interest deleted successfully!");
+            // Refresh map to remove deleted POI
+            if (mapController != null) {
+                mapController.refreshMap();
+                System.out.println("Map refreshed after deleting POI ID: " + selected.getId());
+            } else {
+                System.out.println("MapController is null, cannot refresh map.");
+            }
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error deleting POI", e);
             showAlert(Alert.AlertType.ERROR, "Error", "An error occurred while deleting the Point of Interest.");
