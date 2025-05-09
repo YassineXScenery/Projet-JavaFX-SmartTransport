@@ -4,34 +4,71 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<VBox fx:controller="esprit.tn.guiproject.controllers.PoiController" spacing="15" alignment="TOP_CENTER" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
+<VBox fx:controller="esprit.tn.guiproject.controllers.PoiController"
+      spacing="15" alignment="TOP_CENTER" styleClass="form-container"
+      xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
     <padding>
         <Insets top="20" right="15" bottom="20" left="15"/>
     </padding>
-    <Label text="Point of Interest Management" style="-fx-font-size: 16; -fx-font-weight: bold;"/>
-    <GridPane hgap="10" vgap="10" alignment="CENTER">
-        <Label text="Name:" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
-        <TextField fx:id="poiNameField" GridPane.columnIndex="1" GridPane.rowIndex="0" prefWidth="250"/>
-        <Label text="Latitude:" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
-        <TextField fx:id="poiLatitudeField" GridPane.columnIndex="1" GridPane.rowIndex="1" prefWidth="250"/>
-        <Label text="Longitude:" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
-        <TextField fx:id="poiLongitudeField" GridPane.columnIndex="1" GridPane.rowIndex="2" prefWidth="250"/>
-        <Label text="Type:" GridPane.columnIndex="0" GridPane.rowIndex="3"/>
-        <TextField fx:id="poiTypeField" GridPane.columnIndex="1" GridPane.rowIndex="3" prefWidth="250"/>
-        <HBox spacing="10" alignment="CENTER" GridPane.columnIndex="0" GridPane.rowIndex="4" GridPane.columnSpan="2">
-            <Button text="Add" prefWidth="90" onAction="#addPoi"/>
-            <Button text="Update" prefWidth="90" onAction="#updatePoi"/>
-            <Button text="Clear" prefWidth="90" onAction="#clearPoiFields"/>
+
+    <!-- POI Form Section -->
+    <VBox spacing="15" styleClass="card">
+        <HBox alignment="CENTER_LEFT" spacing="10">
+            <Label text="Point of Interest Management" styleClass="section-header"/>
+            <Region HBox.hgrow="ALWAYS" />
+            <Button text="Clear Form" onAction="#clearPoiFields" styleClass="button-outline"/>
         </HBox>
-    </GridPane>
-    <TableView fx:id="poiTable" prefHeight="350" prefWidth="600">
-        <columns>
-            <TableColumn fx:id="poiIdColumn" text="ID" prefWidth="70"/>
-            <TableColumn fx:id="poiNameColumn" text="Name" prefWidth="160"/>
-            <TableColumn fx:id="poiLatitudeColumn" text="Latitude" prefWidth="130"/>
-            <TableColumn fx:id="poiLongitudeColumn" text="Number" prefWidth="130"/>
-            <TableColumn fx:id="poiTypeColumn" text="Type" prefWidth="110"/>
-        </columns>
-    </TableView>
-    <Button text="Delete Selected" prefWidth="180" onAction="#deletePoi"/>
+
+        <GridPane hgap="15" vgap="15" styleClass="form-grid">
+            <columnConstraints>
+                <ColumnConstraints hgrow="NEVER" minWidth="100" />
+                <ColumnConstraints hgrow="ALWAYS" minWidth="250" />
+            </columnConstraints>
+
+            <Label text="Name:" styleClass="form-label"
+                   GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+            <TextField fx:id="poiNameField" promptText="Enter POI name"
+                       GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+
+            <Label text="Latitude:" styleClass="form-label"
+                   GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+            <TextField fx:id="poiLatitudeField" promptText="Enter latitude"
+                       GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+
+            <Label text="Longitude:" styleClass="form-label"
+                   GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+            <TextField fx:id="poiLongitudeField" promptText="Enter longitude"
+                       GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+
+            <Label text="Type:" styleClass="form-label"
+                   GridPane.columnIndex="0" GridPane.rowIndex="3"/>
+            <TextField fx:id="poiTypeField" promptText="Enter type"
+                       GridPane.columnIndex="1" GridPane.rowIndex="3"/>
+        </GridPane>
+
+        <HBox spacing="15" alignment="CENTER">
+            <Button text="Add" prefWidth="90" onAction="#addPoi" styleClass="button"/>
+            <Button text="Update" prefWidth="90" onAction="#updatePoi" styleClass="button-accent"/>
+        </HBox>
+    </VBox>
+
+    <!-- POI Table Section -->
+    <VBox spacing="15" VBox.vgrow="ALWAYS" styleClass="card">
+        <TableView fx:id="poiTable" prefHeight="350" prefWidth="600" VBox.vgrow="ALWAYS">
+            <columns>
+                <TableColumn fx:id="poiIdColumn" text="ID" prefWidth="70"/>
+                <TableColumn fx:id="poiNameColumn" text="Name" prefWidth="160"/>
+                <TableColumn fx:id="poiLatitudeColumn" text="Latitude" prefWidth="130"/>
+                <TableColumn fx:id="poiLongitudeColumn" text="Longitude" prefWidth="130"/>
+                <TableColumn fx:id="poiTypeColumn" text="Type" prefWidth="110"/>
+            </columns>
+            <placeholder>
+                <Label text="No points of interest available" />
+            </placeholder>
+        </TableView>
+
+        <HBox spacing="15" alignment="CENTER">
+            <Button text="Delete Selected" prefWidth="150" onAction="#deletePoi" styleClass="button-danger"/>
+        </HBox>
+    </VBox>
 </VBox>

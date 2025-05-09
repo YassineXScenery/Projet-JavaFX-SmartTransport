@@ -1,0 +1,420 @@
+/* Modern UI Theme - May 2025 */
+/* Main Application Styles */
+.root {
+    -fx-font-family: 'Poppins', 'Segoe UI', system-ui, sans-serif;
+    -fx-background: #f8f9fa;
+    -fx-font-size: 14px;
+}
+
+/* Color Variables */
+* {
+    -primary-color: #6C63FF;
+    -primary-dark: #5A525D;
+    -primary-light: #ded9ff;
+    -secondary-color: #2EC4B6;
+    -secondary-dark: #26a69a;
+    -accent-color: #FF9F1C;
+    -danger-color: #FF6B6B;
+    -success-color: #2EC4B6;
+    -dark-grey: #343a40;
+    -medium-grey: #6c757d;
+    -light-grey: #e9ecef;
+    -ultra-light-grey: #f8f9fa;
+    -white: #ffffff;
+    -shadow-color: rgba(0, 0, 0, 0.2);
+}
+
+#mainPane {
+    -fx-background-color: -ultra-light-grey;
+}
+
+/* ScrollPane Styling */
+.scroll-pane {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+
+.scroll-pane > .viewport {
+    -fx-background-color: transparent;
+}
+
+/* Card Style for Containers */
+.card {
+    -fx-background-color: -white;
+    -fx-background-radius: 12px;
+    -fx-effect: dropshadow(three-pass-box, -shadow-color, 8, 0, 0, 4);
+    -fx-padding: 15px;
+}
+
+.card-header {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -dark-grey;
+    -fx-padding: 0 0 10px 0;
+}
+
+/* Map Container */
+#mapPane {
+    -fx-background-color: -white;
+    -fx-background-radius: 12px;
+    -fx-effect: dropshadow(three-pass-box, -shadow-color, 8, 0, 0, 3);
+}
+
+/* Weather Section */
+#weatherVBox {
+    -fx-background-color: linear-gradient(to right, #6C63FF, #5A52D5);
+    -fx-background-radius: 12px;
+    -fx-padding: 15px;
+    -fx-effect: dropshadow(three-pass-box, -shadow-color, 8, 0, 0, 3);
+}
+
+#weatherLabel {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -white;
+}
+
+#weatherVBox .label {
+    -fx-text-fill: -white;
+    -fx-font-size: 14px;
+}
+
+/* Modern Inputs */
+.text-field, .combo-box {
+    -fx-background-color: -ultra-light-grey;
+    -fx-background-radius: 8px;
+    -fx-border-color: -light-grey;
+    -fx-border-radius: 8px;
+    -fx-padding: 10px;
+    -fx-font-size: 14px;
+    -fx-effect: dropshadow(three-pass-box, -shadow-color, 2, 0, 0, 1);
+}
+
+.text-field:focused, .combo-box:focused {
+    -fx-border-color: -primary-color;
+    -fx-border-width: 2px;
+    -fx-effect: dropshadow(three-pass-box, -primary-light, 4, 0, 0, 0);
+}
+
+/* Button Styling */
+.button {
+    -fx-background-color: -primary-color;
+    -fx-text-fill: -white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 8px;
+    -fx-padding: 10px 15px;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(three-pass-box, -shadow-color, 4, 0, 0, 2);
+}
+
+.button:hover {
+    -fx-background-color: -primary-dark;
+    -fx-effect: dropshadow(three-pass-box, -shadow-color, 6, 0, 0, 3);
+    -fx-translate-y: -1px;
+}
+
+.button:pressed {
+    -fx-background-color: derive(-primary-dark, -10%);
+    -fx-effect: dropshadow(three-pass-box, -shadow-color, 2, 0, 0, 1);
+    -fx-translate-y: 1px;
+}
+
+/* Different Button Styles */
+.button-secondary {
+    -fx-background-color: -secondary-color;
+}
+
+.button-secondary:hover {
+    -fx-background-color: -secondary-dark;
+}
+
+.button-accent {
+    -fx-background-color: -accent-color;
+}
+
+.button-outline {
+    -fx-background-color: transparent;
+    -fx-border-color: -primary-color;
+    -fx-border-width: 2px;
+    -fx-text-fill: -primary-color;
+}
+
+.button-outline:hover {
+    -fx-background-color: -primary-light;
+}
+
+.button-danger {
+    -fx-background-color: -danger-color;
+}
+
+/* Delete Buttons */
+#deletePoiButton, #deleteRouteButton, #removeAllButton {
+    -fx-background-color: -danger-color;
+}
+
+#deletePoiButton:hover, #deleteRouteButton:hover, #removeAllButton:hover {
+    -fx-background-color: derive(-danger-color, -10%);
+}
+
+/* Section Headers */
+.section-header {
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -dark-grey;
+    -fx-padding: 10px 0;
+}
+
+/* Table Styling */
+.table-view {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-table-cell-border-color: transparent;
+    -fx-padding: 5px;
+}
+
+.table-view .column-header-background {
+    -fx-background-color: -primary-light;
+    -fx-background-radius: 8px 8px 0 0;
+    -fx-padding: 0 0 5px 0;
+}
+
+.table-view .column-header, .table-view .filler {
+    -fx-background-color: transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-border-color: -ultra-light-grey;
+}
+
+.table-view .column-header .label {
+    -fx-text-fill: -dark-grey;
+    -fx-font-weight: bold;
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 10px 5px;
+}
+
+.table-view .table-cell {
+    -fx-padding: 10px 5px;
+    -fx-border-color: transparent;
+    -fx-font-size: 13px;
+    -fx-alignment: CENTER_LEFT;
+}
+
+.table-row-cell {
+    -fx-background-color: -white;
+    -fx-background-radius: 8px;
+    -fx-padding: 5px 0;
+    -fx-cell-size: 40px;
+}
+
+.table-row-cell:odd {
+    -fx-background-color: -ultra-light-grey;
+}
+
+.table-row-cell:selected {
+    -fx-background-color: derive(-primary-light, 30%);
+    -fx-text-fill: -dark-grey;
+}
+
+/* Tab Pane Styles */
+.tab-pane {
+    -fx-tab-min-width: 120px;
+    -fx-tab-max-width: 200px;
+    -fx-tab-min-height: 40px;
+    -fx-border-width: 0;
+}
+
+.tab-pane .tab-header-area {
+    -fx-padding: 5px 0 0 0;
+}
+
+.tab-pane .tab-header-background {
+    -fx-background-color: -white;
+    -fx-effect: dropshadow(three-pass-box, -shadow-color, 4, 0, 0, 2);
+    -fx-background-radius: 12px 12px 0 0;
+}
+
+.tab {
+    -fx-background-color: -white;
+    -fx-background-radius: 8px 8px 0 0;
+    -fx-padding: 10px 15px;
+    -fx-border-width: 0;
+}
+
+.tab:hover {
+    -fx-background-color: -ultra-light-grey;
+}
+
+.tab:selected {
+    -fx-background-color: -primary-light;
+    -fx-focus-color: transparent;
+}
+
+.tab:selected .tab-label {
+    -fx-text-fill: -primary-dark;
+}
+
+.tab .tab-label {
+    -fx-text-fill: -medium-grey;
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+}
+
+/* Content Area Styles */
+.tab-pane .tab-content-area {
+    -fx-background-color: -white;
+    -fx-border-width: 0;
+    -fx-effect: dropshadow(three-pass-box, -shadow-color, 8, 0, 0, 2);
+}
+
+/* Container Layout Styles */
+.vbox, .hbox, .grid-pane {
+    -fx-spacing: 15px;
+}
+
+.vbox, .grid-pane {
+    -fx-padding: 20px;
+}
+
+.hbox {
+    -fx-alignment: center;
+}
+
+/* Scrollbar Styling */
+.scroll-bar:horizontal, .scroll-bar:vertical {
+    -fx-background-color: transparent;
+}
+
+.scroll-bar:horizontal .track,
+.scroll-bar:vertical .track {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-background-radius: 8px;
+}
+
+.scroll-bar:horizontal .thumb,
+.scroll-bar:vertical .thumb {
+    -fx-background-color: -medium-grey;
+    -fx-background-radius: 8px;
+}
+
+.scroll-bar .thumb:hover {
+    -fx-background-color: -primary-color;
+}
+
+/* For animated transitions */
+.animated {
+    -fx-transition: all 0.3s ease;
+}
+
+/* Form layout */
+.form-container {
+    -fx-spacing: 15px;
+    -fx-padding: 20px;
+    -fx-background-color: -white;
+    -fx-background-radius: 12px;
+    -fx-effect: dropshadow(three-pass-box, -shadow-color, 8, 0, 0, 3);
+}
+
+.form-row {
+    -fx-spacing: 10px;
+    -fx-alignment: center-left;
+}
+
+.form-label {
+    -fx-font-weight: bold;
+    -fx-min-width: 100px;
+}
+
+/* Animations and hover effects */
+.hover-lift {
+    -fx-transition: all 0.2s ease;
+}
+
+.hover-lift:hover {
+    -fx-translate-y: -2px;
+    -fx-effect: dropshadow(three-pass-box, -shadow-color, 10, 0, 0, 5);
+}
+
+/* Map Control Styles */
+.map-control-panel {
+    -fx-background-color: -white;
+    -fx-background-radius: 8px;
+    -fx-effect: dropshadow(three-pass-box, -shadow-color, 5, 0, 0, 2);
+    -fx-margin-top: 10px;
+}
+
+.map-control-button {
+    -fx-background-color: -white;
+    -fx-text-fill: -dark-grey;
+    -fx-font-weight: bold;
+    -fx-background-radius: 8px;
+    -fx-min-width: 130px;
+}
+
+.map-control-button:hover {
+    -fx-background-color: -light-grey;
+}
+
+.map-search-bar {
+    -fx-background-color: -white;
+    -fx-background-radius: 25px;
+    -fx-effect: dropshadow(three-pass-box, -shadow-color, 5, 0, 0, 2);
+    -fx-min-width: 400px;
+}
+
+.map-tools-bar {
+    -fx-background-color: -white;
+    -fx-effect: dropshadow(three-pass-box, -shadow-color, 0, -2, 0, 2);
+}
+
+.map-status-bar {
+    -fx-background-color: rgba(255, 255, 255, 0.8);
+    -fx-effect: dropshadow(three-pass-box, -shadow-color, 0, -2, 0, 1);
+}
+
+/* App header and footer */
+.nav-bar {
+    -fx-background-color: -white;
+    -fx-effect: dropshadow(three-pass-box, -shadow-color, 0, 2, 0, 2);
+}
+
+.app-title {
+    -fx-text-fill: -primary-color;
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+}
+
+.footer {
+    -fx-background-color: -dark-grey;
+    -fx-padding: 10px;
+}
+
+.footer-text {
+    -fx-text-fill: -white;
+    -fx-font-size: 12px;
+}
+
+/* Weather and Stats Cards */
+.weather-location {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+}
+
+.weather-temp {
+    -fx-font-size: 28px;
+    -fx-font-weight: bold;
+}
+
+.weather-desc {
+    -fx-font-size: 18px;
+}
+
+.stats-label {
+    -fx-font-size: 14px;
+    -fx-text-fill: -medium-grey;
+}
+
+.stats-value {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -primary-color;
+}
