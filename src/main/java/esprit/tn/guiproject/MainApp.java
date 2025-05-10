@@ -6,12 +6,9 @@ import esprit.tn.guiproject.controllers.TrajetController;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
-import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-
 import java.io.IOException;
 import java.util.logging.Logger;
 
@@ -25,71 +22,54 @@ public class MainApp extends Application {
             // Load MainView.fxml as the root
             FXMLLoader mainLoader = new FXMLLoader(MainApp.class.getResource("/esprit/tn/guiproject/views/MainView.fxml"));
             if (mainLoader.getLocation() == null) {
-                LOGGER.severe("Error: Cannot find MainView.fxml at /esprit/tn/guiproject/views/MainView.fxml");
+                LOGGER.severe("Error: Cannot find MainView.fxml");
                 return;
             }
-            ScrollPane root = mainLoader.load();
+            BorderPane root = mainLoader.load();
             Scene scene = new Scene(root, 1000, 700);
 
-            // Access the mainVBox and its children
-            VBox mainVBox = (VBox) root.getContent();
-            BorderPane mapPane = (BorderPane) mainVBox.lookup("#mapPane");
-            HBox crudHBox = (HBox) mainVBox.lookup("#crudHBox");
-            HBox tablesHBox = (HBox) mainVBox.lookup("#tablesHBox");
+            // Access containers in MainView.fxml using namespace
+            BorderPane mapPane = (BorderPane) mainLoader.getNamespace().get("mapPane");
+            VBox trajetViewContainer = (VBox) mainLoader.getNamespace().get("trajetView");
+            VBox poiViewContainer = (VBox) mainLoader.getNamespace().get("poiView");
 
-            if (mapPane == null || crudHBox == null || tablesHBox == null) {
-                LOGGER.severe("Error: One or more fx:id elements (mapPane, crudHBox, tablesHBox) not found in MainView.fxml");
+            if (mapPane == null || trajetViewContainer == null || poiViewContainer == null) {
+                LOGGER.severe("Error: Missing fx:id elements (mapPane, trajetView, or poiView) in MainView.fxml");
                 return;
             }
 
             // Load MapView.fxml into mapPane
             FXMLLoader mapLoader = new FXMLLoader(MainApp.class.getResource("/esprit/tn/guiproject/views/MapView.fxml"));
-            if (mapLoader.getLocation() == null) {
-                LOGGER.severe("Error: Cannot find MapView.fxml at /esprit/tn/guiproject/views/MapView.fxml");
-                return;
-            }
             mapPane.setCenter(mapLoader.load());
-
-            // Load PoiView.fxml into crudHBox
-            FXMLLoader poiLoader = new FXMLLoader(MainApp.class.getResource("/esprit/tn/guiproject/views/PoiView.fxml"));
-            if (poiLoader.getLocation() == null) {
-                LOGGER.severe("Error: Cannot find PoiView.fxml at /esprit/tn/guiproject/views/PoiView.fxml");
-                return;
-            }
-            VBox poiView = poiLoader.load();
-            crudHBox.getChildren().add(poiView);
-
-            // Load TrajetView.fxml into crudHBox
-            FXMLLoader trajetLoader = new FXMLLoader(MainApp.class.getResource("/esprit/tn/guiproject/views/TrajetView.fxml"));
-            if (trajetLoader.getLocation() == null) {
-                LOGGER.severe("Error: Cannot find TrajetView.fxml at /esprit/tn/guiproject/views/TrajetView.fxml");
-                return;
-            }
-            VBox trajetView = trajetLoader.load();
-            crudHBox.getChildren().add(trajetView);
-
-            // Wire controllers
             MapController mapController = mapLoader.getController();
-            PoiController poiController = poiLoader.getController();
+
+            // Load TrajetView.fxml into trajetViewContainer
+            FXMLLoader trajetLoader = new FXMLLoader(MainApp.class.getResource("/esprit/tn/guiproject/views/TrajetView.fxml"));
+            trajetViewContainer.getChildren().add(trajetLoader.load());
             TrajetController trajetController = trajetLoader.getController();
+
+            // Load PoiView.fxml into poiViewContainer
+            FXMLLoader poiLoader = new FXMLLoader(MainApp.class.getResource("/esprit/tn/guiproject/views/PoiView.fxml"));
+            poiViewContainer.getChildren().add(poiLoader.load());
+            PoiController poiController = poiLoader.getController();
+
+            // Wire controllers together
             if (mapController != null && poiController != null && trajetController != null) {
                 mapController.setPoiController(poiController);
                 mapController.setTrajetController(trajetController);
                 trajetController.setMapController(mapController);
+                poiController.setMapController(mapController);
 
                 // Inject weather labels into MapController
                 mapController.setTemperatureLabel((javafx.scene.control.Label) mainLoader.getNamespace().get("temperatureLabel"));
                 mapController.setDescriptionLabel((javafx.scene.control.Label) mainLoader.getNamespace().get("descriptionLabel"));
                 mapController.setHumidityLabel((javafx.scene.control.Label) mainLoader.getNamespace().get("humidityLabel"));
 
-                LOGGER.info("Controllers wired successfully in MainApp.");
+                LOGGER.info("Controllers wired successfully.");
             } else {
-                LOGGER.severe("Error: One or more controllers not found.");
+                LOGGER.severe("Error: One or more controllers are null.");
                 return;
             }
-
-            // Ensure the ScrollPane starts at the top
-            root.setVvalue(0.0);
 
             primaryStage.setTitle("Cartography and Route Management");
             primaryStage.setScene(scene);

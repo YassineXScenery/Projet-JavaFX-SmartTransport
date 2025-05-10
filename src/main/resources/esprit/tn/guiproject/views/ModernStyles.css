@@ -38,6 +38,17 @@
     -fx-background-color: transparent;
 }
 
+/* Nested ScrollPane for Management Section */
+.management-scroll {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-padding: 0;
+}
+
+.management-scroll > .viewport {
+    -fx-background-color: transparent;
+}
+
 /* Card Style for Containers */
 .card {
     -fx-background-color: -white;
@@ -64,19 +75,36 @@
 #weatherVBox {
     -fx-background-color: linear-gradient(to right, #6C63FF, #5A52D5);
     -fx-background-radius: 12px;
-    -fx-padding: 15px;
+    -fx-padding: 5px;
     -fx-effect: dropshadow(three-pass-box, -shadow-color, 8, 0, 0, 3);
 }
 
-#weatherLabel {
-    -fx-font-size: 18px;
+.weather-title {
+    -fx-font-size: 14px;
     -fx-font-weight: bold;
     -fx-text-fill: -white;
 }
 
-#weatherVBox .label {
+.weather-location {
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
     -fx-text-fill: -white;
-    -fx-font-size: 14px;
+}
+
+.weather-temp {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -white;
+}
+
+.weather-desc {
+    -fx-font-size: 12px;
+    -fx-text-fill: -white;
+}
+
+.weather-humidity {
+    -fx-font-size: 12px;
+    -fx-text-fill: -white;
 }
 
 /* Modern Inputs */
@@ -85,8 +113,8 @@
     -fx-background-radius: 8px;
     -fx-border-color: -light-grey;
     -fx-border-radius: 8px;
-    -fx-padding: 10px;
-    -fx-font-size: 14px;
+    -fx-padding: 5px;
+    -fx-font-size: 12px;
     -fx-effect: dropshadow(three-pass-box, -shadow-color, 2, 0, 0, 1);
 }
 
@@ -102,7 +130,8 @@
     -fx-text-fill: -white;
     -fx-font-weight: bold;
     -fx-background-radius: 8px;
-    -fx-padding: 10px 15px;
+    -fx-padding: 5px 10px;
+    -fx-font-size: 12px;
     -fx-cursor: hand;
     -fx-effect: dropshadow(three-pass-box, -shadow-color, 4, 0, 0, 2);
 }
@@ -158,10 +187,10 @@
 
 /* Section Headers */
 .section-header {
-    -fx-font-size: 22px;
+    -fx-font-size: 18px;
     -fx-font-weight: bold;
     -fx-text-fill: -dark-grey;
-    -fx-padding: 10px 0;
+    -fx-padding: 5px 0;
 }
 
 /* Table Styling */
@@ -188,14 +217,16 @@
     -fx-text-fill: -dark-grey;
     -fx-font-weight: bold;
     -fx-alignment: CENTER_LEFT;
-    -fx-padding: 10px 5px;
+    -fx-padding: 5px;
 }
 
 .table-view .table-cell {
-    -fx-padding: 10px 5px;
+    -fx-padding: 5px;
     -fx-border-color: transparent;
-    -fx-font-size: 13px;
+    -fx-font-size: 11px;
     -fx-alignment: CENTER_LEFT;
+    -fx-wrap-text: true;
+    -fx-text-overrun: ellipsis;
 }
 
 .table-row-cell {
@@ -307,7 +338,7 @@
 
 /* Form layout */
 .form-container {
-    -fx-spacing: 15px;
+    -fx-spacing: 10px;
     -fx-padding: 20px;
     -fx-background-color: -white;
     -fx-background-radius: 12px;
@@ -322,6 +353,7 @@
 .form-label {
     -fx-font-weight: bold;
     -fx-min-width: 100px;
+    -fx-font-size: 12px;
 }
 
 /* Animations and hover effects */
@@ -394,20 +426,6 @@
 }
 
 /* Weather and Stats Cards */
-.weather-location {
-    -fx-font-size: 16px;
-    -fx-font-weight: bold;
-}
-
-.weather-temp {
-    -fx-font-size: 28px;
-    -fx-font-weight: bold;
-}
-
-.weather-desc {
-    -fx-font-size: 18px;
-}
-
 .stats-label {
     -fx-font-size: 14px;
     -fx-text-fill: -medium-grey;

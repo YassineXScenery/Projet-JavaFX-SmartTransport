@@ -3,77 +3,51 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.geometry.Insets?>
-<?import javafx.scene.text.*?>
 <?import java.net.URL?>
 
-<ScrollPane fitToWidth="true" prefHeight="700.0" prefWidth="1000.0" styleClass="main-scroll" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
+<BorderPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" styleClass="main-content">
     <stylesheets>
         <URL value="@ModernStyles.css" />
     </stylesheets>
-    <content>
-        <VBox fx:id="mainVBox" spacing="20" alignment="TOP_CENTER" styleClass="main-content">
+
+    <top>
+        <VBox styleClass="fixed-section" spacing="10">
             <padding>
-                <Insets top="20" right="20" bottom="20" left="20"/>
+                <Insets left="20" right="20"/>
             </padding>
 
             <!-- Map Section -->
             <VBox spacing="10" styleClass="card, hover-lift">
-                <Label text="Interactive Map" styleClass="card-header"/>
-                <BorderPane fx:id="mapPane" prefHeight="400" minHeight="400" maxHeight="400">
-                    <center>
-                        <fx:include source="MapView.fxml"/>
-                    </center>
-                </BorderPane>
+                <BorderPane fx:id="mapPane" prefHeight="300" minHeight="300" maxHeight="300"/>
             </VBox>
 
             <!-- Weather Section -->
-            <VBox fx:id="weatherVBox" spacing="10" alignment="CENTER">
-                <Label fx:id="weatherLabel" text="Weather Information" styleClass="weather-title"/>
-                <HBox spacing="15" alignment="CENTER">
-                    <VBox alignment="CENTER" spacing="5">
-                        <Label fx:id="locationLabel" text="Location" styleClass="weather-location"/>
-                        <Label fx:id="temperatureLabel" text="Temperature: N/A" styleClass="weather-temp"/>
-                    </VBox>
-                    <Region prefWidth="20" />
-                    <VBox alignment="CENTER" spacing="5">
-                        <Label fx:id="descriptionLabel" text="Description: N/A" styleClass="weather-desc"/>
-                        <Label fx:id="humidityLabel" text="Humidity: N/A"/>
-                    </VBox>
+            <VBox fx:id="weatherVBox" spacing="5" alignment="CENTER" styleClass="card, hover-lift">
+                <padding>
+                    <Insets top="5" bottom="5"/>
+                </padding>
+                <Label fx:id="weatherLabel" text="Weather" styleClass="weather-title"/>
+                <HBox spacing="100" alignment="CENTER">
+                    <Label fx:id="temperatureLabel" text="Temp: N/A" styleClass="weather-desc"/>
+                    <Label fx:id="descriptionLabel" text="Desc: N/A" styleClass="weather-desc"/>
+                    <Label fx:id="humidityLabel" text="Humidity: N/A" styleClass="weather-humidity"/>
                 </HBox>
             </VBox>
-
-            <!-- CRUD Section -->
-            <HBox fx:id="crudHBox" spacing="30" alignment="CENTER" styleClass="form-container">
-                <padding>
-                    <Insets top="20" right="25" bottom="20" left="25"/>
-                </padding>
-                <TabPane styleClass="hover-lift" tabClosingPolicy="UNAVAILABLE">
-                    <Tab text="Trajet Management">
-                        <fx:include source="TrajetView.fxml" fx:id="trajetView"/>
-                    </Tab>
-                    <Tab text="Points of Interest">
-                        <fx:include source="PoiView.fxml" fx:id="poiView"/>
-                    </Tab>
-                </TabPane>
-            </HBox>
-
-            <!-- Tables Section -->
-            <HBox fx:id="tablesHBox" spacing="30" alignment="CENTER" styleClass="form-container">
-                <padding>
-                    <Insets top="20" right="25" bottom="20" left="25"/>
-                </padding>
-                <!-- Placeholder for tables, managed by MainApp or controller -->
-            </HBox>
-
-            <!-- Footer -->
-            <HBox alignment="CENTER" spacing="10" styleClass="footer">
-                <padding>
-                    <Insets top="10" right="25" bottom="10" left="25"/>
-                </padding>
-                <Label text="© 2025 Travel Explorer" styleClass="footer-text"/>
-                <Region HBox.hgrow="ALWAYS" />
-                <Label text="Version 1.0" styleClass="footer-text"/>
-            </HBox>
         </VBox>
-    </content>
-</ScrollPane>
+    </top>
+
+    <center>
+        <ScrollPane fitToWidth="true" styleClass="management-scroll">
+            <content>
+                <HBox fx:id="crudHBox" spacing="30" alignment="CENTER" styleClass="form-container">
+                    <padding>
+                        <Insets top="20" right="25" bottom="20" left="25"/>
+                    </padding>
+                    <!-- Swapped the order of these two VBoxes -->
+                    <VBox fx:id="poiView" HBox.hgrow="ALWAYS" styleClass="hover-lift"/>
+                    <VBox fx:id="trajetView" HBox.hgrow="ALWAYS" styleClass="hover-lift"/>
+                </HBox>
+            </content>
+        </ScrollPane>
+    </center>
+</BorderPane>

@@ -5,21 +5,21 @@
 <?import javafx.scene.layout.*?>
 
 <VBox fx:controller="esprit.tn.guiproject.controllers.PoiController"
-      spacing="15" alignment="TOP_CENTER" styleClass="form-container"
+      spacing="10" alignment="TOP_CENTER" styleClass="form-container"
       xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
     <padding>
         <Insets top="20" right="15" bottom="20" left="15"/>
     </padding>
 
     <!-- POI Form Section -->
-    <VBox spacing="15" styleClass="card">
+    <VBox spacing="10" styleClass="card">
         <HBox alignment="CENTER_LEFT" spacing="10">
             <Label text="Point of Interest Management" styleClass="section-header"/>
             <Region HBox.hgrow="ALWAYS" />
-            <Button text="Clear Form" onAction="#clearPoiFields" styleClass="button-outline"/>
+            <Button text="Clear Form" prefHeight="30" onAction="#clearPoiFields" styleClass="button-outline"/>
         </HBox>
 
-        <GridPane hgap="15" vgap="15" styleClass="form-grid">
+        <GridPane hgap="10" vgap="10" styleClass="form-grid">
             <columnConstraints>
                 <ColumnConstraints hgrow="NEVER" minWidth="100" />
                 <ColumnConstraints hgrow="ALWAYS" minWidth="250" />
@@ -46,29 +46,29 @@
                        GridPane.columnIndex="1" GridPane.rowIndex="3"/>
         </GridPane>
 
-        <HBox spacing="15" alignment="CENTER">
-            <Button text="Add" prefWidth="90" onAction="#addPoi" styleClass="button"/>
-            <Button text="Update" prefWidth="90" onAction="#updatePoi" styleClass="button-accent"/>
+        <HBox spacing="10" alignment="CENTER">
+            <Button text="Add" prefWidth="90" prefHeight="30" onAction="#addPoi" styleClass="button"/>
+            <Button text="Update" prefWidth="90" prefHeight="30" onAction="#updatePoi" styleClass="button-accent"/>
         </HBox>
     </VBox>
 
     <!-- POI Table Section -->
-    <VBox spacing="15" VBox.vgrow="ALWAYS" styleClass="card">
-        <TableView fx:id="poiTable" prefHeight="350" prefWidth="600" VBox.vgrow="ALWAYS">
+    <VBox spacing="10" VBox.vgrow="ALWAYS" styleClass="card">
+        <TableView fx:id="poiTable" prefHeight="200" VBox.vgrow="ALWAYS">
             <columns>
-                <TableColumn fx:id="poiIdColumn" text="ID" prefWidth="70"/>
+                <TableColumn fx:id="poiIdColumn" text="ID" prefWidth="80"/>
                 <TableColumn fx:id="poiNameColumn" text="Name" prefWidth="160"/>
-                <TableColumn fx:id="poiLatitudeColumn" text="Latitude" prefWidth="130"/>
-                <TableColumn fx:id="poiLongitudeColumn" text="Longitude" prefWidth="130"/>
-                <TableColumn fx:id="poiTypeColumn" text="Type" prefWidth="110"/>
+                <TableColumn fx:id="poiLatitudeColumn" text="Latitude" prefWidth="100"/>
+                <TableColumn fx:id="poiLongitudeColumn" text="Longitude" prefWidth="100"/>
+                <TableColumn fx:id="poiTypeColumn" text="Type" prefWidth="80"/>
             </columns>
             <placeholder>
                 <Label text="No points of interest available" />
             </placeholder>
         </TableView>
 
-        <HBox spacing="15" alignment="CENTER">
-            <Button text="Delete Selected" prefWidth="150" onAction="#deletePoi" styleClass="button-danger"/>
+        <HBox spacing="10" alignment="CENTER">
+            <Button text="Delete Selected" prefWidth="150" prefHeight="30" onAction="#deletePoi" styleClass="button-danger"/>
         </HBox>
     </VBox>
 </VBox>
