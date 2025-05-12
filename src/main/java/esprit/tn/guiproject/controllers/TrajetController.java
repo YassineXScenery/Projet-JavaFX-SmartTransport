@@ -12,6 +12,8 @@ import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.util.Callback;
+import javafx.scene.input.KeyEvent;
+import javafx.scene.input.KeyCode;
 import java.sql.Time;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -145,27 +147,27 @@ public class TrajetController {
                 } else {
                     setText("ID: " + item.getId() + " - Name: " + item.getNom());
                 }
-            }
 
-            // Add safe mouse handling to prevent exceptions during direct clicks
-            {
-                setOnMouseClicked(event -> {
-                    if (getItem() != null) {
-                        // Get the parent ComboBox
-                        @SuppressWarnings("unchecked")
-                        ComboBox<PointInteret> comboBox = (ComboBox<PointInteret>) getListView().getParent().getParent().getParent();
+                // Add safe mouse handling to prevent exceptions during direct clicks
+                {
+                    setOnMouseClicked(event -> {
+                        if (getItem() != null) {
+                            // Get the parent ComboBox
+                            @SuppressWarnings("unchecked")
+                            ComboBox<PointInteret> comboBox = (ComboBox<PointInteret>) getListView().getParent().getParent().getParent();
 
-                        // Safely set the value and update UI
-                        Platform.runLater(() -> {
-                            PointInteret selectedItem = getItem();
-                            comboBox.setValue(selectedItem);
-                            comboBox.getEditor().setText("ID: " + selectedItem.getId() + " - Name: " + selectedItem.getNom());
-                            comboBox.hide();
-                        });
+                            // Safely set the value and update UI
+                            Platform.runLater(() -> {
+                                PointInteret selectedItem = getItem();
+                                comboBox.setValue(selectedItem);
+                                comboBox.getEditor().setText("ID: " + selectedItem.getId() + " - Name: " + selectedItem.getNom());
+                                comboBox.hide();
+                            });
 
-                        event.consume();
-                    }
-                });
+                            event.consume();
+                        }
+                    });
+                }
             }
         };
 
@@ -183,45 +185,39 @@ public class TrajetController {
         });
 
         routeStartPointComboBox.getEditor().textProperty().addListener((obs, oldVal, newVal) -> {
-            // Avoid filtering during selection events
             Platform.runLater(() -> {
-                if (!routeStartPointComboBox.isShowing() && newVal != null) {
+                if (newVal != null) {
+                    String lowerCaseFilter = newVal.toLowerCase();
                     filteredStartPoints.setPredicate(point -> {
-                        if (newVal.isEmpty()) return true;
-                        String lowerCaseFilter = newVal.toLowerCase();
+                        if (lowerCaseFilter.isEmpty()) return true;
                         return point.getNom().toLowerCase().contains(lowerCaseFilter) ||
-                                String.valueOf(point.getId()).contains(lowerCaseFilter);
+                               String.valueOf(point.getId()).contains(lowerCaseFilter);
                     });
 
                     if (!filteredStartPoints.isEmpty()) {
                         routeStartPointComboBox.show();
+                    } else {
+                        routeStartPointComboBox.hide();
                     }
                 }
             });
         });
 
-        // Custom showing/hiding behavior to prevent empty list exceptions
-        routeStartPointComboBox.setOnShowing(event -> {
-            Platform.runLater(() -> {
-                // Ensure we have items to show
-                if (filteredStartPoints.isEmpty()) {
-                    filteredStartPoints.setPredicate(p -> true);
-                }
-            });
-        });
-
-        // Safe selection handling
         routeStartPointComboBox.setOnAction(event -> {
             Platform.runLater(() -> {
                 PointInteret selected = routeStartPointComboBox.getSelectionModel().getSelectedItem();
                 if (selected != null) {
-                    // Update editor text without triggering the filter
                     String displayText = "ID: " + selected.getId() + " - Name: " + selected.getNom();
-                    if (!routeStartPointComboBox.getEditor().getText().equals(displayText)) {
-                        routeStartPointComboBox.getEditor().setText(displayText);
-                    }
+                    routeStartPointComboBox.getEditor().setText(displayText);
                 }
             });
+        });
+
+        // Prevent clearing input on space key
+        routeStartPointComboBox.getEditor().addEventFilter(KeyEvent.KEY_PRESSED, event -> {
+            if (event.getCode() == KeyCode.SPACE && routeStartPointComboBox.getEditor().getText().isEmpty()) {
+                event.consume();
+            }
         });
 
         // Repeat the same setup for end point ComboBox
@@ -233,27 +229,22 @@ public class TrajetController {
             }
         });
 
+        // Improved filtering logic for routeEndPointComboBox
         routeEndPointComboBox.getEditor().textProperty().addListener((obs, oldVal, newVal) -> {
             Platform.runLater(() -> {
-                if (!routeEndPointComboBox.isShowing() && newVal != null) {
+                if (newVal != null) {
+                    String lowerCaseFilter = newVal.toLowerCase();
                     filteredEndPoints.setPredicate(point -> {
-                        if (newVal.isEmpty()) return true;
-                        String lowerCaseFilter = newVal.toLowerCase();
+                        if (lowerCaseFilter.isEmpty()) return true;
                         return point.getNom().toLowerCase().contains(lowerCaseFilter) ||
-                                String.valueOf(point.getId()).contains(lowerCaseFilter);
+                               String.valueOf(point.getId()).contains(lowerCaseFilter);
                     });
 
                     if (!filteredEndPoints.isEmpty()) {
                         routeEndPointComboBox.show();
+                    } else {
+                        routeEndPointComboBox.hide();
                     }
-                }
-            });
-        });
-
-        routeEndPointComboBox.setOnShowing(event -> {
-            Platform.runLater(() -> {
-                if (filteredEndPoints.isEmpty()) {
-                    filteredEndPoints.setPredicate(p -> true);
                 }
             });
         });
@@ -263,11 +254,16 @@ public class TrajetController {
                 PointInteret selected = routeEndPointComboBox.getSelectionModel().getSelectedItem();
                 if (selected != null) {
                     String displayText = "ID: " + selected.getId() + " - Name: " + selected.getNom();
-                    if (!routeEndPointComboBox.getEditor().getText().equals(displayText)) {
-                        routeEndPointComboBox.getEditor().setText(displayText);
-                    }
+                    routeEndPointComboBox.getEditor().setText(displayText);
                 }
             });
+        });
+
+        // Prevent clearing input on space key for routeEndPointComboBox
+        routeEndPointComboBox.getEditor().addEventFilter(KeyEvent.KEY_PRESSED, event -> {
+            if (event.getCode() == KeyCode.SPACE && routeEndPointComboBox.getEditor().getText().isEmpty()) {
+                event.consume();
+            }
         });
     }
 
