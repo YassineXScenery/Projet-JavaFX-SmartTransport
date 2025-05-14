@@ -55,10 +55,13 @@ public class MainApp extends Application {
 
             // Wire controllers together
             if (mapController != null && poiController != null && trajetController != null) {
+                // Set up bidirectional relationship between controllers
                 mapController.setPoiController(poiController);
                 mapController.setTrajetController(trajetController);
-                trajetController.setMapController(mapController);
                 poiController.setMapController(mapController);
+                poiController.setTrajetController(trajetController);
+                trajetController.setMapController(mapController);
+                trajetController.setPoiController(poiController);
 
                 // Inject weather labels into MapController
                 mapController.setTemperatureLabel((javafx.scene.control.Label) mainLoader.getNamespace().get("temperatureLabel"));

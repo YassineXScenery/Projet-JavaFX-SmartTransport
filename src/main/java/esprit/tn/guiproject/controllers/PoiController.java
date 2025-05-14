@@ -32,10 +32,15 @@ public class PoiController {
     private PointInteretService poiService = new PointInteretService();
     private ObservableList<PointInteret> poiList = FXCollections.observableArrayList();
     private MapController mapController;
+    private TrajetController trajetController;  // Add this field
 
     public void setMapController(MapController mapController) {
         this.mapController = mapController;
         System.out.println("MapController set in PoiController to: " + (mapController != null ? "not null" : "null"));
+    }
+
+    public void setTrajetController(TrajetController controller) {
+        this.trajetController = controller;
     }
 
     @FXML
@@ -98,6 +103,12 @@ public class PoiController {
                 poiList.add(poi);
                 clearPoiFields();
                 showAlert(Alert.AlertType.INFORMATION, "Success", "Point of Interest added successfully!");
+                
+                // Notify TrajetController of the new POI
+                if (trajetController != null) {
+                    trajetController.onPointInteretAdded();
+                }
+                
                 // Refresh map to show new POI
                 if (mapController != null) {
                     mapController.refreshMap();
@@ -132,6 +143,12 @@ public class PoiController {
             loadPoiData();
             clearPoiFields();
             showAlert(Alert.AlertType.INFORMATION, "Success", "Point of Interest updated successfully!");
+            
+            // Notify TrajetController of the POI update
+            if (trajetController != null) {
+                trajetController.onPointInteretAdded(); // Reuse the same method as it does the same refresh
+            }
+            
             // Refresh map to reflect updated POI
             if (mapController != null) {
                 mapController.refreshMap();
@@ -159,7 +176,13 @@ public class PoiController {
             poiList.remove(selected);
             clearPoiFields();
             showAlert(Alert.AlertType.INFORMATION, "Success", "Point of Interest deleted successfully!");
-            // Refresh map to remove deleted POI
+            
+            // Notify TrajetController of the POI deletion
+            if (trajetController != null) {
+                trajetController.onPointInteretAdded(); // Reuse the same method as it does the same refresh
+            }
+            
+            // Refresh map to reflect deleted POI
             if (mapController != null) {
                 mapController.refreshMap();
                 System.out.println("Map refreshed after deleting POI ID: " + selected.getId());

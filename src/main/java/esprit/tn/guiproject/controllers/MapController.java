@@ -375,6 +375,13 @@ public class MapController {
                 poi.setId(id);
                 System.out.println("Created new POI: id=" + id + ", lat=" + lat + ", lng=" + lng);
                 controller.addMarkerToMap(poi);
+
+                // Notify TrajetController of the new POI
+                if (trajetController != null) {
+                    Platform.runLater(() -> {
+                        trajetController.onPointInteretAdded();
+                    });
+                }
             } catch (Exception e) {
                 LOGGER.severe("Error in handlePOICreation: " + e.getMessage());
             }
